@@ -3,7 +3,7 @@ from ij.gui import PolygonRoi, Roi
 import math
 #import os 
 #import sys------------------------------------------------------------------------------------------------
-
+index=input('Give yarn index:')
 #import csv
 #yarn_indx=0
 #yarn_type=''

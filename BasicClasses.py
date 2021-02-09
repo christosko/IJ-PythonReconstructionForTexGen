@@ -5,16 +5,19 @@ import os
 
 class Yarns:
 
-   def __init__(self,Index,Type):
+   def __init__(self,Index,Type,PropertiesDict,Resolution):
       self.Index=Index
       self.Section=Section(None,None)
-      self.Node=MasterNode(None,None,None,None)
+      self.Node=MasterNode(None,None,None,None,None)
       self.Type=Type # This will be used to determine master node definition method
+      self.Properties=PropertiesDict
       self.left=None
       self.right=None
-      
-   def InsertSection(self,Index,Section):
 
+
+
+   def InsertSection(self,Index,Type,Section):
+    if Type in ['X','Y','x','y','Weft','Warp','weft','warp']:
       if isinstance(self.Index,int):
          
          if Index<self.Index:
@@ -46,12 +49,25 @@ class Yarns:
       elif self.Index==None:
          self.Index=Index
          self.Section.Insert(Index, Section.Slice, Section.Polygon)     
+    elif Type in ['Z','z','Binder','binder']:
+    else:
+      print 'Error: Yarn type is not recognised'
+      return 'Yarn type is not recognised'  
 
-   def AddNodes(self,PositionList):
-    if PositionList:
-      if self.Type=='X':
-      elif self.Type=='Y':
-       
+   def AddNodes(self):
+    section=self.ExtractSection(self,self.Index)
+    MaxS=section.FindMax()
+    MinS=section.FindMin()
+    m0x=np.sum(MinS.Polygon[:,0])/len(MinS.Polygon[:,0])
+    m0y=np.sum(MinS.Polygon[:,1])/len(MinS.Polygon[:,1])
+    m1x=np.sum(MaxS.Polygon[:,0])/len(MaxS.Polygon[:,0])
+    m1y=np.sum(MaxS.Polygon[:,1])/len(MaxS.Polygon[:,1])
+    if self.Type=='X' or self.Type=='Warp' or self.Type=='warp':
+    m0=np.array([m0x,self.Slice,m0y])
+    m1=np.array([m1x,self.Slice,m1y])
+
+
+
          
      
 
@@ -82,11 +98,11 @@ class Yarns:
 
 class Section:
 
-  def __init__(self,Slice,Polygon):
+  def __init__(self,Slice,Polygon,Resolution):
     self.Index=None
     self.Slice=Slice
     self.t=0.0
-    self.Polygon=Polygon
+    self.Polygon=Polygon*Resolution
     self.left=None
     self.right=None
     
@@ -194,7 +210,7 @@ if __name__=='__main__':
   Dat={}
   Dat=Sec.ExtractData(Dat)
   print Dat
-# New reconstruction scheme : 
+# New reconstruction tool: 
 # Trace (point and click) binder yarn path in mid xz plane: 
 # Information obtained: X and Z slice pairs and orientation vectors
 #1) Save X,Z pairs
