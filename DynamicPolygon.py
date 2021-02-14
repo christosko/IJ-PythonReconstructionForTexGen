@@ -1,5 +1,7 @@
 import numpy as np
+import math as m 
 import matplotlib.pyplot as plt
+
 #import marplotlib.image as img
 def mag(V):
     return np.sqrt(V.dot(V))
@@ -22,62 +24,85 @@ class Node:
         self.Value=Value
         self.DValue0=abs(Value-RefNode.Value)
         self.Control=False
+        self.Activations=[]
         self.Trace=np.empty([Iterations,2])
+        self.FactorThreshold=10.0
+        self.Factors=[]
     def UpdatePosition(self,Dt):
         NewPos=self.PositionV+self.SpeedV*Dt
-        self.PositionV=NewPos
-    def UpdateSpeed(self,RefNode,Value,FactorThreshold,ReverseSpeedFactor):
+        self.PositionV=NewPos#np.array([int(NewPos[0]),int(NewPos[1])])
+    def UpdateSpeed(self,RefNode,Value,ReverseSpeedFactor):
         DValue=abs(Value-RefNode.Value)
-        Factor=DValue/self.DValue0
-        print(Factor)
-        if Factor>FactorThreshold:
-          self.Control=True	
-          self.SpeedV=-ReverseSpeedFactor*self.SpeedV
-        else:     
-          self.SpeedV=self.SpeedV*0.95	
+        self.Value=Value
+        Factor=abs(DValue-self.DValue0)
+        #self.DValue0=DValue
+        self.Factors.append(Factor)
+        #self.FactorThreshold=Factor*1.5
+        self.FactorThreshold=(sum(self.Factors)/len(self.Factors))
+        #print(Factor)
+        aa=25 # Activations allowed
+        check=Factor-self.FactorThreshold
+        if check>3.0:
+          self.Activations.append(Factor)
+          if len(self.Activations)>aa: 
+             self.Control=True	
+             self.SpeedV=-ReverseSpeedFactor*self.SpeedV
+          else:
+             self.SpeedV=(1/check)*self.SpeedV   
+        #else:     
+         # self.SpeedV=self.SpeedV0
 
 if __name__=='__main__':
-  # For full polygon: 
-  #1)Determine number of points and radius
-  #2)Compute position vectors     	
+    	
   path='D:\\IJPythonReconstructionOfTexComp\\'
-  imgName='X430'        	
+  imgName='X498'        	
   GSA=np.genfromtxt(path+imgName+'.txt')
-  Dt=1.0
-  iters=100
-  Speed0=5
-  #Initialise
-  
-  r=3
-  FactorThreshold=6.0
-  ReverseSpeedFactor=0.5
-  CPVec=np.array([237,168])
-  PPVec0=np.array([224,190])
-  CValue=np.average(GSA[CPVec[0]-r:CPVec[0]+r,CPVec[1]-r:CPVec[1]+r])
-  PValue0=np.average(GSA[PPVec0[0]-r:PPVec0[0]+r,PPVec0[1]-r:PPVec0[1]+r])
-  C=FixedNode(CPVec,CValue)
-  P=Node(0,C,PPVec0,Speed0,PValue0)  
-  for i in range(iters):
-     P.UpdatePosition(Dt)
-     pos=P.PositionV
-     P.Trace[i]=pos
-     if P.Control:
-        upto=i+1
-        break
-     X=int(pos[0])
-     Y=int(pos[1])
-     NewPVal=np.average(GSA[X-r:X+r,Y-r:Y+r])
-     P.UpdateSpeed(C,NewPVal,FactorThreshold,ReverseSpeedFactor)
-     
+  Dt=1.0 #Time step
+  iters=300 # Solution iterations
+  Speed0=0.5 #Initial particle speed 
+  Num=100 # Number of particles
+  w0=12 #Center Pixel window size
+  w1=8# Particle Pixel window size
+  ReverseSpeedFactor=0.1# Corrective backstep speed factor (if needed)
+  CVec=np.array([304,376])#[237,168])#Centre point (fixed) taken from click on ImageJ
+  CValue=np.average(GSA[CVec[0]-w0:CVec[0]+w0,CVec[1]-w0:CVec[1]+w0]) # Compute base average intensity
+  C=FixedNode(CVec,CValue)
+  R=3 #radius of polygon initialisation circle
+  Dang=(2*m.pi)/(Num-1)# Angle step
+  NodeList=[]
+  #Initilise output plot
   img = plt.imread(path+imgName+'.png')
   
   fig, ax = plt.subplots()
   
   ax.imshow(img)
-  ax.scatter(CPVec[1],CPVec[0])
-  ax.annotate('Centre',(CPVec[1],CPVec[0]))
-  ax.scatter(P.Trace[:upto,1],P.Trace[:upto,0])
-  for i in range(upto):
-    ax.annotate(str(i),(P.Trace[i,1],P.Trace[i,0]))
+  ax.scatter(CVec[1],CVec[0])
+  ax.annotate('Centre',(CVec[1],CVec[0]))
+  #Initialise polygon nodes
+  for i in range(Num):
+    pos=np.array([m.cos(Dang*i)*R+CVec[0],m.sin(Dang*i)*R*4.0+CVec[1]])
+    value=np.average(GSA[int(pos[0]-w1):int(pos[0]+w1),int(pos[1]-w1):int(pos[1]+w1)])
+    N=Node(i,C,pos,Speed0,value,iters)
+    NodeList.append(N)
+  #Run simulation
+  for N in NodeList:
+    upto=iters-1
+    for i in range(iters):
+       N.UpdatePosition(Dt)
+       pos=N.PositionV
+       N.Trace[i]=pos
+       if N.Control:
+          upto=i
+          break
+       X=int(pos[0])
+       Y=int(pos[1])
+       NewPVal=np.average(GSA[X-w1:X+w1,Y-w1:Y+w1])
+       N.UpdateSpeed(C,NewPVal,ReverseSpeedFactor)
 
+    #Add nodes to plot
+    #ax.scatter(N.Trace[0,1],N.Trace[0,0])
+    ax.scatter(N.Trace[upto,1],N.Trace[upto,0])
+    #for p in [0,upto]:
+    ax.annotate(str(N.Index),(N.Trace[upto,1],N.Trace[upto,0]))
+    print(N.Index,len(N.Activations))
   plt.show()
