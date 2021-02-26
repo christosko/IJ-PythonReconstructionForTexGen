@@ -2,7 +2,10 @@ import numpy as np
 import math as m 
 import matplotlib.pyplot as plt
 
-#import marplotlib.image as img
+#A particle front approach to edge detection for 
+#composite yarn cross-section outline
+#taken from μCT data
+
 def mag(V):
     return np.sqrt(V.dot(V))
 def diff(V0,V1):
@@ -42,7 +45,7 @@ class Node:
         #print(Factor)
         aa=25 # Activations allowed
         check=Factor-self.FactorThreshold
-        if check>3.0:
+        if check>10.0:
           self.Activations.append(Factor)
           if len(self.Activations)>aa: 
              self.Control=True	
@@ -55,7 +58,7 @@ class Node:
 if __name__=='__main__':
     	
   path='D:\\IJPythonReconstructionOfTexComp\\'
-  imgName='X498'        	
+  imgName='X498'   #image name  	
   GSA=np.genfromtxt(path+imgName+'.txt')
   Dt=1.0 #Time step
   iters=300 # Solution iterations
