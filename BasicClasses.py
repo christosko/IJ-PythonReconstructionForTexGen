@@ -2,7 +2,8 @@ import numpy as np
 
 import math as m
 import os
-
+import sys
+from os import listdir
 cwd=os.getcwd()
 sys.path.append(cwd)
 #Requires a minimum build of texgen and a path pointing to Python libraris
@@ -45,10 +46,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
 
            if self.left is None:
               self.left=Yarns(Index)              
-              try:
-                self.left.Sections[Section.Index].Insert(Section)     
-              except KeyError:
-                self.left.Sections[Section.Index]=Section
+              self.left.Sections[Section.Index]=Section
            else:
               self.left.InsertSection(Index,Section)
 
@@ -56,28 +54,24 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
 
            if self.right is None:
               self.right=Yarns(Index)
-              try:
-                self.right.Sections[Section.Index].Insert(Section)
-              except KeyError:
-                self.Sections[Section.Index]=Section
+              self.right.Sections[Section.Index]=Section
            else:
               self.right.InsertSection(Index,Section)
 
          elif Index==self.Index:
-           if self.Section.Slice:
-              try:
-                self.Sections[Section.Index].Insert(Section)             
-              except KeyError:
-                self.Sections[Section.Index]=Section  
-              USections=self.ExtractSections(Index)
-              for S in USections:
-                Min=USections[S].FindMin()
-                Max=USections[S].FindMax()
-                #print Min,Max
-                self.Sections[S].UpdatePositions(Min,Max)
-              self.AddNodes()
-           else:
-              self.Sections[Section.Index]=Section           
+
+           try:
+             self.Sections[Section.Index].Insert(Section)             
+           except KeyError:
+             self.Sections[Section.Index]=Section  
+           
+           for S in self.Sections:
+             Min=self.Sections[S].FindMin()
+             Max=self.Sections[S].FindMax()
+             #print Min,Max
+             self.Sections[S].UpdatePositions(Min.Slice,Max.Slice)
+           #self.AddMasterNodes()
+         
       elif self.Index==None:
          self.Index=Index
          try:
@@ -90,8 +84,8 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
       if self.left:
         self.left.AddMasterNodes()
       for S in range(len(self.Sections)):
-        MaxS=Sections[S].FindMax()
-        MinS=Sections[S].FindMin()
+        MaxS=self.Sections[S].FindMax()
+        MinS=self.Sections[S].FindMin()
         m0x=np.sum(MinS.Polygon[:,0])/len(MinS.Polygon[:,0])
         m0y=np.sum(MinS.Polygon[:,1])/len(MinS.Polygon[:,1])
         m1x=np.sum(MaxS.Polygon[:,0])/len(MaxS.Polygon[:,0])
@@ -152,7 +146,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
 
       if self.left:
         self.left.PrintYarnTree()
-      print(self.Section)
+      print(self.Index)
       if self.right:
         self.right.PrintYarnTree()
 
@@ -168,12 +162,13 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
 class Section:
 
   def __init__(self,Index,Slice,Polygon,Direction):
+
     self.Index=Index
     self.Slice=Slice
     self.Direction=Direction
     self.d=0.0
     self.Polygon=Polygon
-    if self.Polygon:
+    if self.Slice:
        CentrePos=np.sum(Polygon,0)/len(Polygon[:,0])
        if Direction in ['X','x']:
           Position=np.array([Slice,CentrePos[0],CentrePos[1]])
@@ -190,27 +185,27 @@ class Section:
     self.right=None
     
   def Insert(self,Section):
-    if self.Index==Section.Index:
-      if isinstance(self.Slice,int):
-           if self.Slice>Section.Slice:
-             if self.left==None:
-                self.left=Section
-             else:
-                self.left.Insert(Section)
-  
-           elif self.Slice<Section.Slice:
-  
-             if self.right==None:
-                self.right=Section
-             else:
-                self.right.Insert(Section)
-  
-           elif self.Slice==Section.Slice:
-             print('Polygon updated for slice:'+str(Section.Slice)+' in Yarn:'+str(Section.Index))
-             self.Polygon=Section.Polygon
-  
-      elif self.Slice==None:  
-        self=Section
+
+    if isinstance(self.Slice,int):
+         if self.Slice>Section.Slice:
+           if self.left==None:
+              self.left=Section
+           else:
+              self.left.Insert(Section)
+
+         elif self.Slice<Section.Slice:
+
+           if self.right==None:
+              self.right=Section
+           else:
+              self.right.Insert(Section)
+
+         elif self.Slice==Section.Slice:
+           print('Polygon updated for slice:'+str(Section.Slice)+' in Yarn:'+str(Section.Index))
+           self.Polygon=Section.Polygon
+
+    elif self.Slice==None:  
+      self=Section
 
 
   def UpdatePositions(self,Min,Max):
@@ -225,22 +220,22 @@ class Section:
   def UpdateGlobalPositions(self,YarnLength,PreLength,SecLength):
    
    if self.left:
-     self.left.UpdatePositions(Min,Max) 
+     self.left.UpdateGlobalPositions(YarnLength,PreLength,SecLength) 
    self.d=(PreLength+SecLength*self.t)/YarnLength
    if self.right:
-     self.right.UpdatePositions(Min,Max)    
+     self.right.UpdateGlobalPositions(YarnLength,PreLength,SecLength)    
  
   def FindMax(self):
     if isinstance(self.Slice,int):
        if self.right: 
           return self.right.FindMax()
-       return self.Slice
+       return self
 
   def FindMin(self):
     if isinstance(self.Slice,int):
        if self.left: 
           return self.left.FindMin()
-       return self.Slice  
+       return self  
 
   def ExtractData(self,DataDict):
      if isinstance(self.Slice,int):
@@ -258,6 +253,13 @@ class Section:
      if self.right:
        self.right.TreeToDictionary()
 
+  def PrintTree(self):
+     if self.left:
+       self.left.PrintTree()
+     print(self.Slice)
+     if self.right:
+       self.right.PrintTree()  
+
 class MasterNode:
   def __init__(self,Index,Position,Angle,Tangent,Up):
     self.Index=Index
@@ -267,13 +269,15 @@ class MasterNode:
     self.Up=Up
  
 class SlaveNode:
-  def __init__(self,Position)
+  def __init__(self,Position):
     self.Position=Position
 
 
-
-
-#if __name__=='__main__':
+if __name__=='__main__':
+  Sec=Section(0,None,None,None)
+  TPolygon=np.array([[0.0,0.0],[0.0,1.0],[1.0,0.0],[1.0,1.0]])
+  Sec=Section(0,43,TPolygon,'X')  
+  print Sec.FindMin()
 #  #####
 # # TPolygon=np.array([[3.4,5],[5,6],[4.5,3.2]])
 # # S0=234

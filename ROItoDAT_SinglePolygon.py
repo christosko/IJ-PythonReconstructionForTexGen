@@ -3,7 +3,7 @@ from ij.gui import PolygonRoi, Roi
 import math
 #import os 
 #import sys------------------------------------------------------------------------------------------------
-index=input('Give yarn index:')
+#index=input('Give yarn index:')
 #import csv
 #yarn_indx=0
 #yarn_type=''
@@ -20,9 +20,9 @@ if roi:
     x = polygon.xpoints
     y = polygon.ypoints
 
-    dirPath='D:\\Polygon_Data_55VF\\Data\\'
+    dirPath='D:\\IJPythonReconstructionOfTexComp\\Data\\'
    # os.chdir(dirPath)
-    fileName='Y_0_'+str(slic)+'.dat'
+    fileName='Z_4_1_'+str(slic)+'.dat'
 
     f = open(dirPath+fileName, 'w')
     try:
