@@ -29,6 +29,7 @@ def NodeDistance(N0,N1):
   dy=N0.Position[1]-N1.Position[1]
   dz=N0.Position[2]-N1.Position[2]
   return m.sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2))
+
 class Yarns: # This class, after initialised, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
 
    def __init__(self,Index):
@@ -114,8 +115,8 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)
          elif self.Sections[S].Direction in ['Z','z']:
-            m1=np.array([m0x,m0y,MinS.Slice])
-            m0=np.array([m0x,m0y,MaxS.Slice])
+            m1=np.array([m1x,m1y,MinS.Slice])
+            m0=np.array([m1x,m1y,MaxS.Slice])
             t=np.array([0.0,0.0,1.0])
             up=np.array([1.0,0.0,0.0])
             M0=MasterNode(0,m0,0.0,t,up)
@@ -343,8 +344,7 @@ if __name__=='__main__':
   Interpolation=CInterpolationLinear(False, False, False)
   
   #Traverse auxiliary yarn tree and extract yarns
-  YarnDict={}
-  MyYarnDict=MyYarns.ExtractYarns(YarnDict)
+  MyYarnDict=MyYarns.ExtractYarns({})
   # Iterate yarn class to extact data and populate corresponding TexGen classes
   for y in MyYarnDict:
     MyYarn=MyYarnDict[y]
@@ -356,7 +356,7 @@ if __name__=='__main__':
     
     for sec in MySections:
       MySection=MySections[sec]
-      direction=MySection.Direction
+      Direction=MySection.Direction
       index=MySection.Index
       SectionsDict=MySection.TreeToDictionary({})
       for s in SectionsDict:
