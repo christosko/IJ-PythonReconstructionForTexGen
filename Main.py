@@ -30,13 +30,36 @@ def NodeDistance(N0,N1):
   dz=N0.Position[2]-N1.Position[2]
   return m.sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2))
 
+def MatchArrays(Arr1,Arr2):
+  tol=1e-9
+  diff_0=1.0e8
+  if len(Arr1)>len(Arr2):
+     diff_Arr=Arr1[:len(Arr2)]-Arr2     
+  else:  
+     diff_Arr=Arr1-Arr2[:len(Arr1)]       
+
+  dist_Arr=np.sqrt(np.sum(diff_Arr**2,axis=1))
+  diff_1=np.sum(dist_Arr)
+  stop=0
+  while tol<diff_0-diff_1 and stop<100:
+    diff_0=diff_1
+    Arr2=np.insert(Arr2,0,Arr2[-1],0)
+    Arr2=np.delete(Arr2,-1,0)
+    if len(Arr1)>len(Arr2):
+       diff_Arr=Arr1[:len(Arr2)]-Arr2     
+    else:  
+       diff_Arr=Arr1-Arr2[:len(Arr1)]    
+    dist_Arr=np.sqrt(np.sum(diff_Arr**2,axis=1))
+    diff_1=np.sum(dist_Arr)   
+    stop+=1
+  return Arr2  
+
 class Yarns: # This class, after initialised, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
 
    def __init__(self,Index):
       self.Index=Index
-      self.Sections={} #Each yarn has a section list assign to it. 
+      self.Sections={} #Each yarn has a section list assigned to it. 
       self.Nodes={} # Empty node list
-      #self.Type=Type # To determine tangent direction and master node coordinates
       self.Length=0
       self.left=None
       self.right=None
@@ -103,27 +126,32 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
          if self.Sections[S].Direction in ['X','x']:
             m0=np.array([MinS.Slice,m0x,m0y])
             m1=np.array([MaxS.Slice,m0x,m0y])
-            t=np.array([1.0,0.0,0.0])
+            t=np.array([-1.0,0.0,0.0])
             up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)    
          elif self.Sections[S].Direction in ['Y','y']:
             m0=np.array([m0x,MinS.Slice,m0y])
             m1=np.array([m0x,MaxS.Slice,m0y])
-            t=np.array([0.0,1.0,0.0])
+            t=np.array([0.0,-1.0,0.0])
             up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)
          elif self.Sections[S].Direction in ['Z','z']:
-            m1=np.array([m1x,m1y,MinS.Slice])
-            m0=np.array([m1x,m1y,MaxS.Slice])
+            m1=np.array([m0x,m0y,MinS.Slice])
+            m0=np.array([m0x,m0y,MaxS.Slice])
             t=np.array([0.0,0.0,1.0])
-            up=np.array([1.0,0.0,0.0])
+            up=np.array([0.0,1.0,0.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)     
          else :
-            print 'No direction specified for Section:'+str(self.Sections[S].Index)     
-
+            print 'No direction specified for Section:'+str(self.Sections[S].Index)  
+         # Rotates polygon point order to match the previous polygon -  not great
+         #if S==0:
+         #   self.Sections[S].MatchPolygons(MinS.Polygon)
+         #else:
+         #   self.Sections[S].MatchPolygons(self.Sections[S-1].FindMax().Polygon)
+          
          self.Nodes[2*S]=M0
          self.Nodes[2*S+1]=M1
 
@@ -136,6 +164,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
          for S in range(len(self.Sections)):
            SecLength=NodeDistance(self.Nodes[2*S],self.Nodes[2*S+1])
            self.Sections[S].UpdateGlobalPositions(self.Length,PreLength,SecLength)
+
            try:
              PreLength+=SecLength+NodeDistance(self.Nodes[2*S+1],self.Nodes[2*S+2])
            except KeyError:
@@ -174,7 +203,10 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
        self.right.ExtractYarns(EmptyDict)    
      return EmptyDict
 
-class Section:
+
+       
+
+class Section: #Data binary tree for signle direction section sequence - recursive methods
 
   def __init__(self,Index,Slice,Polygon,Direction):
 
@@ -238,11 +270,18 @@ class Section:
 
   def UpdateGlobalPositions(self,YarnLength,PreLength,SecLength): # For entire path
    
-   if self.left:
-     self.left.UpdateGlobalPositions(YarnLength,PreLength,SecLength) 
-   self.d=(PreLength+SecLength*self.d)/YarnLength
-   if self.right:
-     self.right.UpdateGlobalPositions(YarnLength,PreLength,SecLength)    
+    if self.left:
+      self.left.UpdateGlobalPositions(YarnLength,PreLength,SecLength) 
+    self.d=(PreLength+SecLength*self.d)/YarnLength
+    if self.right:
+      self.right.UpdateGlobalPositions(YarnLength,PreLength,SecLength)    
+  
+  def MatchPolygons(self,PreviousPolygon): 
+    if self.left:
+       self.left.MatchPolygons(self.Polygon)
+    self.Polygon=MatchArrays(PreviousPolygon,self.Polygon) 
+    if self.right:
+       self.right.MatchPolygons(self.Polygon)    
  
   def FindMax(self):
    if isinstance(self.Slice, float or int):
@@ -304,7 +343,7 @@ if __name__=='__main__':
   file.close()
   ImgRes=float(ImgRes)
   #Define domain
-  DS=WinSize*np.array([1.0,1.0,-1.0])*ImgRes
+  DS=WinSize*np.array([1.0,1.0,1.0])*ImgRes
   print DS
   P0=np.array([0.0,0.0,0.0])
   CP2=XYZ(DS[0],DS[1],DS[2])
@@ -325,11 +364,11 @@ if __name__=='__main__':
     YarnIndex=int(file[1])
     Index=int(file[2])
     if Direction in ['Z','z']:
-       Slice=-int(file[3])*ImgRes
-       Polygon=np.genfromtxt(cwd+DatFold+'\\'+FileNames[i])*ImgRes
+       Slice=DS[2]-int(file[3])*ImgRes
+       Polygon=np.genfromtxt(cwd+DatFold+'\\'+FileNames[i])*np.array([1.0,-1.0])*ImgRes+np.array([0.0,DS[1]])
     else:
        Slice=int(file[3])*ImgRes
-       Polygon=np.genfromtxt(cwd+DatFold+'\\'+FileNames[i])*np.array([1.0,-1.0])*ImgRes   
+       Polygon=np.genfromtxt(cwd+DatFold+'\\'+FileNames[i])*np.array([1.0,-1.0])*ImgRes+np.array([0.0,DS[2]])   
     #Populate trees   
     MySection=Section(Index,Slice,Polygon,Direction)
     MyYarns.InsertSection(YarnIndex,MySection)
@@ -389,7 +428,10 @@ if __name__=='__main__':
        CYarn0.AddNode(N)
        n0=CYarn0.GetNode(i)
        Up=Nodes[i].Up
+       Tangent=Nodes[i].Tangent
        CUp=XYZ(Up[0],Up[1],Up[2])
+       CTangent=XYZ(Tangent[0],Tangent[1],Tangent[2])
+       n0.SetTangent(CTangent)
        n0.SetUp(CUp)
        i+=1
     CYarn0.AssignInterpolation(Interpolation)
