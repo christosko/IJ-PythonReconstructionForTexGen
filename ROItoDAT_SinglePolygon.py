@@ -20,9 +20,9 @@ if roi:
     x = polygon.xpoints
     y = polygon.ypoints
 
-    dirPath='D:\\IJPythonReconstructionOfTexComp\\Data\\'
+    dirPath='D:\\IJPythonReconstructionOfTexComp\\Data2\\'
    # os.chdir(dirPath)
-    fileName='X_4_0_'+str(slic)+'.dat'
+    fileName='X_2_2_'+str(slic)+'.dat'
 
     f = open(dirPath+fileName, 'w')
     try:

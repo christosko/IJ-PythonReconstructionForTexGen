@@ -74,7 +74,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
            if self.left is None:
               self.left=Yarns(Index)              
               self.left.Sections[Section.Index]=Section
-              print 'Left insert:'+str(Index)
+              #print 'Left insert:'+str(Index)
            else:
               self.left.InsertSection(Index,Section)
 
@@ -83,14 +83,14 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
            if self.right is None:
               self.right=Yarns(Index)
               self.right.Sections[Section.Index]=Section
-              print 'Right insert:'+str(Index)
+              #print 'Right insert:'+str(Index)
            else:
               self.right.InsertSection(Index,Section)
 
          elif Index==self.Index:
 
            try:
-             print 'New Insert'
+             #print 'New Insert'
              self.Sections[Section.Index].Insert(Section)             
            except KeyError:
              self.Sections[Section.Index]=Section  
@@ -126,24 +126,25 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
          if self.Sections[S].Direction in ['X','x']:
             m0=np.array([MinS.Slice,m0x,m0y])
             m1=np.array([MaxS.Slice,m0x,m0y])
-            t=np.array([-1.0,0.0,0.0])
+            t=np.array([0.0,0.0,0.0])
             up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)    
          elif self.Sections[S].Direction in ['Y','y']:
             m0=np.array([m0x,MinS.Slice,m0y])
             m1=np.array([m0x,MaxS.Slice,m0y])
-            t=np.array([0.0,-1.0,0.0])
+            t=np.array([0.0,0.0,0.0])
             up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)
          elif self.Sections[S].Direction in ['Z','z']:
-            m1=np.array([m0x,m0y,MinS.Slice])
-            m0=np.array([m0x,m0y,MaxS.Slice])
+            m0=np.array([m0x,m0y,MinS.Slice])
+            m1=np.array([m0x,m0y,MaxS.Slice])
+
             t=np.array([0.0,0.0,1.0])
-            up=np.array([0.0,1.0,0.0])
-            M0=MasterNode(0,m0,0.0,t,up)
-            M1=MasterNode(1,m1,0.0,t,up)     
+            up=np.array([0.0,-1.0,0.0])
+            M0=MasterNode(0,m1,0.0,t,up)
+            M1=MasterNode(1,m0,0.0,t,up)     
          else :
             print 'No direction specified for Section:'+str(self.Sections[S].Index)  
          # Rotates polygon point order to match the previous polygon -  not great
@@ -158,7 +159,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
       for i in range(len(self.Nodes)-1):
          self.Length+=NodeDistance(self.Nodes[i],self.Nodes[i+1])
 
-      print self.Length
+      #print self.Length
       if len(self.Sections)>1:
          PreLength=0 
          for S in range(len(self.Sections)):
@@ -238,7 +239,7 @@ class Section: #Data binary tree for signle direction section sequence - recursi
          if self.Slice>Section.Slice: 
 
            if self.left==None:
-              print 'Left section insert:'+str(Section.Slice)
+              #print 'Left section insert:'+str(Section.Slice)
               self.left=Section
            else:
               self.left.Insert(Section)
@@ -246,7 +247,7 @@ class Section: #Data binary tree for signle direction section sequence - recursi
          elif self.Slice<Section.Slice:
 
            if self.right==None:
-              print 'Right section insert:'+str(Section.Slice)
+              #print 'Right section insert:'+str(Section.Slice)
               self.right=Section
            else:
               self.right.Insert(Section)
@@ -344,13 +345,13 @@ if __name__=='__main__':
   ImgRes=float(ImgRes)
   #Define domain
   DS=WinSize*np.array([1.0,1.0,1.0])*ImgRes
-  print DS
+  #print DS
   P0=np.array([0.0,0.0,0.0])
   CP2=XYZ(DS[0],DS[1],DS[2])
   CP1=XYZ(P0[0],P0[1],P0[2])
   CDomain=CDomainPlanes(CP1,CP2) # TexGen domain class
   #Polygon Data folder:
-  DatFold='\\Data'
+  DatFold='\\Data2'
   os.chdir(cwd+DatFold)
   # Store Files:
   FileList=[(f.replace('.dat','')).split('_') for f in listdir(cwd+DatFold)] # list of info from names
@@ -363,12 +364,15 @@ if __name__=='__main__':
     Direction=file[0]
     YarnIndex=int(file[1])
     Index=int(file[2])
+    Slice=int(file[3])*ImgRes
+    Polygon=np.genfromtxt(cwd+DatFold+'\\'+FileNames[i])*ImgRes
     if Direction in ['Z','z']:
-       Slice=DS[2]-int(file[3])*ImgRes
-       Polygon=np.genfromtxt(cwd+DatFold+'\\'+FileNames[i])*np.array([1.0,-1.0])*ImgRes+np.array([0.0,DS[1]])
-    else:
-       Slice=int(file[3])*ImgRes
-       Polygon=np.genfromtxt(cwd+DatFold+'\\'+FileNames[i])*np.array([1.0,-1.0])*ImgRes+np.array([0.0,DS[2]])   
+       #Slice=DS[2]-Slice
+       Polygon=Polygon*np.array([1.0,1.0])+np.array([0.0,0.0])#([DS[0],DS[1]])
+    elif Direction in ['X','x']:
+       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[2]])
+    elif Direction in ['Y','y']:
+       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[2]])             
     #Populate trees   
     MySection=Section(Index,Slice,Polygon,Direction)
     MyYarns.InsertSection(YarnIndex,MySection)
@@ -388,7 +392,7 @@ if __name__=='__main__':
   for y in MyYarnDict:
     MyYarn=MyYarnDict[y]
     Nodes=MyYarn.Nodes
-    print Nodes
+    #print Nodes
     MySections=MyYarn.Sections
     CSection=CYarnSectionInterpPosition()
     CNodeList=[CNode(XYZ(Nodes[n].Position[0],Nodes[n].Position[1],Nodes[n].Position[2])) for n in Nodes]
@@ -401,19 +405,19 @@ if __name__=='__main__':
       for s in SectionsDict:
         CXYVector=XYVector()
         MyPolygon=SectionsDict[s].Polygon
-        print MyPolygon
+        #print MyPolygon
         if Direction in ['X','x']:
           MNPos=np.array([Nodes[2*sec].Position[1],Nodes[2*sec].Position[2]])
-          print MNPos
-          LocPolygon=MyPolygon-MNPos
+          #print MNPos
+          LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,1.0])
         elif Direction in ['Y','y']:
           MNPos=np.array([Nodes[2*sec].Position[0],Nodes[2*sec].Position[2]])
-          print MNPos
-          LocPolygon=MyPolygon-MNPos
+          #print MNPos
+          LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,1.0])
         elif Direction in ['Z','z']:
           MNPos=np.array([Nodes[2*sec].Position[0],Nodes[2*sec].Position[1]])
-          print MNPos
-          LocPolygon=MyPolygon-MNPos
+          #print MNPos
+          LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,-1.0])
         else:
           print 'Unrecognised direction'    
         CXYList=[XY(p[0],p[1]) for p in LocPolygon]
@@ -430,8 +434,8 @@ if __name__=='__main__':
        Up=Nodes[i].Up
        Tangent=Nodes[i].Tangent
        CUp=XYZ(Up[0],Up[1],Up[2])
-       CTangent=XYZ(Tangent[0],Tangent[1],Tangent[2])
-       n0.SetTangent(CTangent)
+       #CTangent=XYZ(Tangent[0],Tangent[1],Tangent[2])
+       #n0.SetTangent(CTangent)
        n0.SetUp(CUp)
        i+=1
     CYarn0.AssignInterpolation(Interpolation)
