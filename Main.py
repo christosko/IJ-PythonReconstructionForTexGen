@@ -439,7 +439,7 @@ if __name__=='__main__':
        n0.SetUp(CUp)
        i+=1
     CYarn0.AssignInterpolation(Interpolation)
-    CYarn0.SetResolution(50,100)
+    CYarn0.SetResolution(20,500)
     Textile.AddYarn(CYarn0)
   #Save tg3 file  
   Textile.AssignDomain(CDomain)
@@ -449,6 +449,7 @@ if __name__=='__main__':
     
 
     
+
 
 
 
