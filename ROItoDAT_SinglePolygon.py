@@ -22,7 +22,7 @@ if roi:
 
     dirPath='D:\\IJPythonReconstructionOfTexComp\\Data2\\'
    # os.chdir(dirPath)
-    fileName='X_2_2_'+str(slic)+'.dat'
+    fileName='Z_2_3_'+str(slic)+'.dat'
 
     f = open(dirPath+fileName, 'w')
     try:
