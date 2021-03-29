@@ -132,30 +132,29 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
             m0=np.array([MinS.Slice,m0x,m0y])
             m1=np.array([MaxS.Slice,m0x,m0y])
             t=np.array([1.0,0.0,0.0])
-            up=np.array([0.0,0.0,-1.0])
+            up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)    
          elif self.Sections[S].Direction in ['Y','y']:
             m0=np.array([m0x,MinS.Slice,m0y])
             m1=np.array([m0x,MaxS.Slice,m0y])
-            t=np.array([1.0,0.0,0.0])
-            up=np.array([0.0,0.0,-1.0])
+            t=np.array([0.0,1.0,0.0])
+            up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)
          elif self.Sections[S].Direction in ['Z','z']:
             m0=np.array([m0x,m0y,MinS.Slice])
             m1=np.array([m0x,m0y,MaxS.Slice])
-            t=np.array([0.0,0.0,1.0])
-
             if self.Sections[S].Sign:
-               up=np.array([-1.0,0.0,0.0])                 
+               t=np.array([0.0,0.0,1.0])              
+               up=np.array([0.0,-1.0,0.0])                 
                M0=MasterNode(0,m0,0.0,t,up)
                M1=MasterNode(1,m1,0.0,t,up) 
-            
             else:
+               t=np.array([0.0,0.0,-1.0])              
                up=np.array([0.0,-1.0,0.0])              
                M0=MasterNode(0,m1,0.0,t,up)
-               M1=MasterNode(1,m0,0.0,t,up)                      
+               M1=MasterNode(1,m0,0.0,t,up)                                 
          else :
             print 'No direction specified for Section:'+str(self.Sections[S].Index)  
          # Rotates polygon point order to match the previous polygon -  not great
@@ -394,12 +393,13 @@ if __name__=='__main__':
           Sign=int(file[4])
           Slice=DS[2]-Slice
        except IndexError:
+          #Slice=DS[2]-Slice
           pass
-       Polygon=Polygon*np.array([1.0,1.0])+np.array([0.0,0.0])#([DS[0],DS[1]])
+       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[1]])#([DS[0],DS[1]])
     elif Direction in ['X','x']:
-       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[2]])
+       #Slice=DS[0]-Slice
+       Polygon=Polygon*np.array([-1.0,-1.0])+np.array([DS[1],DS[2]])
     elif Direction in ['Y','y']:
-       #Slice=DS[1]-Slice
        Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[2]])             
     #Populate trees   
     MySection=Section(Index,Slice,Polygon,Direction,Sign)
@@ -432,25 +432,27 @@ if __name__=='__main__':
       SectionsDict=MySection.TreeToDictionary({})
       Sign=MySection.Sign
       #Local coordinate system:
+      # - Adjust transformations accordingly to match the global representation
       for s in SectionsDict:
         CXYVector=XYVector()
         MyPolygon=SectionsDict[s].Polygon
         if Direction in ['X','x']:
           MNPos=np.array([Nodes[2*sec].Position[1],Nodes[2*sec].Position[2]])
-          LocPolygon=(MyPolygon-MNPos)*np.array([1.0,-1.0])
+          LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,1.0])
+          LocPolygon=LocPolygon[::-1] # Fixes hollow rendering (if needed)
         elif Direction in ['Y','y']:
           MNPos=np.array([Nodes[2*sec].Position[0],Nodes[2*sec].Position[2]])
-          LocPolygon=(MyPolygon-MNPos)*np.array([1.0,-1.0])
+          LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,1.0])
         elif Direction in ['Z','z']:
           MNPos=np.array([Nodes[2*sec].Position[0],Nodes[2*sec].Position[1]])
           if Sign:
-             LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,-1.0])
-             LocPolygon[:,[0,1]]=LocPolygon[:,[1,0]]
-             LocPolygon=RotateArray(LocPolygon,0.6)
+             LocPolygon=(MyPolygon-MNPos)*np.array([1.0,-1.0])
           else:
              LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,-1.0])
+             LocPolygon=LocPolygon[::-1]
         else:
-          print 'Unrecognised direction'    
+          print 'Unrecognised direction'   
+        #LocPolygon=RotateArray(LocPolygon,0.9)   
         CXYList=[XY(p[0],p[1]) for p in LocPolygon]
         for i in CXYList:
           CXYVector.push_back(i)
@@ -464,13 +466,13 @@ if __name__=='__main__':
        n0=CYarn0.GetNode(i)
        Up=Nodes[i].Up
        Tangent=Nodes[i].Tangent
-       CUp=XYZ(Up[0],Up[1],Up[2])
-       #CTangent=XYZ(Tangent[0],Tangent[1],Tangent[2])
-       #n0.SetTangent(CTangent)
+       CUp=XYZ(Up[0],Up[1],Up[2])        
+       CTangent=XYZ(Tangent[0],Tangent[1],Tangent[2])
+       n0.SetTangent(CTangent)
        n0.SetUp(CUp)
        i+=1
     CYarn0.AssignInterpolation(Interpolation)
-    CYarn0.SetResolution(int(NumSlices*0.9),100)
+    CYarn0.SetResolution(int(NumSlices*0.6),200)
     Textile.AddYarn(CYarn0)
   #Save tg3 file  
   Textile.AssignDomain(CDomain)
