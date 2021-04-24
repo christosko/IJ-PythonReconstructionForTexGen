@@ -442,7 +442,8 @@ if __name__=='__main__':
           LocPolygon=LocPolygon[::-1] # Fixes hollow rendering (if needed)
         elif Direction in ['Y','y']:
           MNPos=np.array([Nodes[2*sec].Position[0],Nodes[2*sec].Position[2]])
-          LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,1.0])
+          LocPolygon=(MyPolygon-MNPos)*np.array([1.0,1.0])
+          LocPolygon=LocPolygon[::-1]
         elif Direction in ['Z','z']:
           MNPos=np.array([Nodes[2*sec].Position[0],Nodes[2*sec].Position[1]])
           if Sign:
@@ -472,12 +473,12 @@ if __name__=='__main__':
        n0.SetUp(CUp)
        i+=1
     CYarn0.AssignInterpolation(Interpolation)
-    CYarn0.SetResolution(int(NumSlices*0.6),200)
+    CYarn0.SetResolution(int(NumSlices*0.6),300)
     Textile.AddYarn(CYarn0)
   #Save tg3 file  
   Textile.AssignDomain(CDomain)
   AddTextile('Rec',Textile)
-  SaveToXML(cwd+'\\Reconstruction.tg3',"",OUTPUT_STANDARD)
+  SaveToXML(cwd+'\\Reconstruction2.tg3',"",OUTPUT_STANDARD)
 
     
 
