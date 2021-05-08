@@ -8,7 +8,7 @@ image = IJ.getImage()
 roi = image.getRoi()
 slic=image.getSlice()
 ### Define : 
-insert='Y_1_0_'
+insert='Z_33_-1_' + str(slic) + '_-1'
 ###
 
 if roi:
@@ -18,8 +18,8 @@ if roi:
     x = polygon.xpoints
     y = polygon.ypoints
 
-    dirPath='D:\\IJPythonReconstructionOfTexComp\\Data2\\'
-    fileName=insert+str(slic)+'.dat'
+    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF55\\Data3\\'
+    fileName=insert + '.dat'
     if os.path.isdir(dirPath):
       f = open(dirPath+fileName, 'w')
     else: 

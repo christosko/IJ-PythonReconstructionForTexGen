@@ -80,9 +80,9 @@ class Node:
           else:
              self.SpeedV=self.SpeedV.timesEquals(1/check)  
 Dt=1.0 #Time step
-iters=500 # Solution iterations
+iters=1000 # Solution iterations
 Speed0=0.5 #Initial particle speed 
-Num=50 # Number of particles
+Num=65 # Number of particles
 ReverseSpeedFactor=0.1# Corrective backstep speed factor (if needed) 
 Dang=(2*math.pi)/(Num-1)# Angle step
 aa=iters-200 # Activations allowed
@@ -96,9 +96,9 @@ NodeList=[]
 #fy  Ellipse vertical stretch 
 #n  Power ellipse
 
-mode='Void'
+mode='yarn'
 if mode in ['Yarn','yarn']:
-  w0,w1,R,fx,fy,n=4,4,15,2.5,1.0,0.85
+  w0,w1,R,fx,fy,n=4,4,8,3.0,0.6,0.3
 elif mode in ['Void', 'void']:
   w0,w1,R,fx,fy,n=1,1,1,1.0,1.0,1.0
 

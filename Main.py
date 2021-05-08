@@ -64,7 +64,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
    def __init__(self,Index):
       self.Index=Index
       self.Sections={} #Each yarn has a section list assigned to it. 
-      self.Nodes={} # Empty node list
+      self.Nodes=MasterNode(0,None,None,None,None) # Empty node class
       self.Length=0
       self.left=None
       self.right=None
@@ -120,7 +120,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
       if self.left:
         self.left.AddMasterNodes()
 
-      for S in range(len(self.Sections)):
+      for S in self.Sections:
          MaxS=self.Sections[S].FindMax()
          MinS=self.Sections[S].FindMin()
          m0x=np.sum(MinS.Polygon[:,0])/len(MinS.Polygon[:,0])
@@ -162,23 +162,28 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
          #   self.Sections[S].MatchPolygons(MinS.Polygon)
          #else:
          #   self.Sections[S].MatchPolygons(self.Sections[S-1].FindMax().Polygon)
-          
-         self.Nodes[2*S]=M0
-         self.Nodes[2*S+1]=M1
+         M0.Index=2*S
+         M1.Index=2*S+1 
+        #print(M0.Position, M1.Position)
+         self.Nodes.Insert(M0)
+         self.Nodes.Insert(M1)
+      # Fix duplicate node issue
+      Nodes=self.Nodes
+      NodeList=Nodes.GetList()
 
-      for i in range(len(self.Nodes)-1):
-         self.Length+=NodeDistance(self.Nodes[i],self.Nodes[i+1])
+      for i in range(Nodes.CountNodes()-1):
+         self.Length+=NodeDistance(NodeList[i],NodeList[i+1])
 
       #print self.Length
       if len(self.Sections)>1:
          PreLength=0 
-         for S in range(len(self.Sections)):
-           SecLength=NodeDistance(self.Nodes[2*S],self.Nodes[2*S+1])
+         for S in self.Sections:
+           SecLength=NodeDistance(Nodes.Find(2*S),Nodes.Find(2*S+1))
            self.Sections[S].UpdateGlobalPositions(self.Length,PreLength,SecLength)
 
            try:
-             PreLength+=SecLength+NodeDistance(self.Nodes[2*S+1],self.Nodes[2*S+2])
-           except KeyError:
+             PreLength+=SecLength+NodeDistance(Nodes.Find(2*S+1),Nodes.Find(2*S+2))
+           except AttributeError:
              pass  
 
       if self.right:
@@ -206,7 +211,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
       if self.right:
         self.right.PrintYarnTree()
 
-   def ExtractYarns(self,EmptyDict):
+   def ExtractYarns(self,EmptyDict={}):
      if self.left:
        self.left.ExtractYarns(EmptyDict)
      EmptyDict[self.Index]=self  
@@ -214,7 +219,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
        self.right.ExtractYarns(EmptyDict)    
      return EmptyDict
 
-   def CountSlices(self,Count):
+   def CountSlices(self,Count=0):
 
      if self.left:
         self.left.CountSlices(Count)
@@ -229,7 +234,7 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
  
        
 
-class Section: #Data binary tree for signle direction section sequence - recursive methods
+class Section: #Data binary tree for signle direction section sequence - recursive method
 
   def __init__(self,Index,Slice,Polygon,Direction,Sign):
 
@@ -317,7 +322,7 @@ class Section: #Data binary tree for signle direction section sequence - recursi
           return self.left.FindMin()
        return self
 
-  def CountNodes(self,Count):
+  def CountNodes(self,Count=0):
      if self.left:
        Count=self.left.CountNodes(Count)
      Count+=1  
@@ -325,7 +330,7 @@ class Section: #Data binary tree for signle direction section sequence - recursi
        Count=self.right.CountNodes(Count)
      return  Count
     
-  def TreeToDictionary(self,EmptyDict):
+  def TreeToDictionary(self,EmptyDict={}):
      if self.left:
        EmptyDict=self.left.TreeToDictionary(EmptyDict)
 
@@ -342,23 +347,98 @@ class Section: #Data binary tree for signle direction section sequence - recursi
      if self.right:
        self.right.PrintTree()  
 
+
+
 class MasterNode:
+
   def __init__(self,Index,Position,Angle,Tangent,Up):
     self.Index=Index
     self.Position=Position
     self.Angle=Angle
     self.Tangent=Tangent
     self.Up=Up
- 
+    self.right=None
+    self.left=None
+
+  def Insert(self,Node):
+
+    if isinstance(self.Index, int):
+       
+        if self.Index>Node.Index: 
+
+           if self.left==None:
+              self.left=Node
+           else:
+              self.left.Insert(Node)
+
+        elif self.Index<Node.Index:
+
+           if self.right==None:
+              self.right=Node
+           else:
+              self.right.Insert(Node)
+
+        elif self.Index==Node.Index:
+           self.Position=Node.Position
+           self.Angle=Node.Angle
+           self.Tangent=Node.Tangent
+           self.Up=Node.Up
+    else:
+
+        self=Node
+
+  def GetList(self,Empty=[]):
+
+     if self.left:
+        Empty=self.left.GetList(Empty)
+     
+     Empty.append(self)  
+     
+     if self.right:
+        Empty=self.right.GetList(Empty)    
+     
+     return Empty
+
+  def Find(self,ind):
+
+    if ind<self.Index:
+      if self.left is None:
+          return str(ind)+' Not Found'
+      return self.left.Find(ind)
+    elif ind>self.Index:
+       if self.right is None:
+          return str(ind)+' Not Found'
+       return self.right.Find(ind)
+    elif ind==self.Index:
+       return self
+  
+  def CountNodes(self,Count=0):
+     if self.left:
+       Count=self.left.CountNodes(Count)
+     Count+=1  
+     if self.right:
+       Count=self.right.CountNodes(Count)
+     return  Count
+
+  def PrintTree(self):
+    if self.left:
+      self.left.PrintTree()
+    print(self.Index)
+    if self.right:
+      self.right.PrintTree()
+
 class SlaveNode:
   def __init__(self,Position):
     self.Position=Position
 
 
 if __name__=='__main__':
-  #####
+  #Get in the appropriate VF folder 
+  cwd=cwd+'\\VF55'
+  os.chdir(cwd)
   
   #Get data for window size and resolution:
+  
   WinSize=np.genfromtxt('window_size.txt')
   file=open('pixel_size.txt','r')
   ImgRes=file.read() #mm
@@ -371,7 +451,7 @@ if __name__=='__main__':
   CP1=XYZ(P0[0],P0[1],P0[2])
   CDomain=CDomainPlanes(CP1,CP2) # TexGen domain class
   #Polygon Data folder:
-  DatFold='\\Data2'
+  DatFold='\\Data3'
   os.chdir(cwd+DatFold)
   # Store Files:
   FileList=[(f.replace('.dat','')).split('_') for f in listdir(cwd+DatFold)] # list of info from names
@@ -415,21 +495,21 @@ if __name__=='__main__':
   Interpolation=CInterpolationLinear(False, False, False)
   
   #Traverse auxiliary yarn tree and extract yarns
-  MyYarnDict=MyYarns.ExtractYarns({})
+  MyYarnDict=MyYarns.ExtractYarns()
   # Iterate yarn class to extact data and populate corresponding TexGen classes
   for y in MyYarnDict:
     MyYarn=MyYarnDict[y]
-    Nodes=MyYarn.Nodes
-    NumSlices=MyYarn.CountSlices(0)
+    Nodes=MyYarn.Nodes.GetList()
+    NumSlices=MyYarn.CountSlices()
     MySections=MyYarn.Sections
     CSection=CYarnSectionInterpPosition()
-    CNodeList=[CNode(XYZ(Nodes[n].Position[0],Nodes[n].Position[1],Nodes[n].Position[2])) for n in Nodes]
+    CNodeList=[CNode(XYZ(n.Position[0],n.Position[1],n.Position[2])) for n in Nodes]
     
     for sec in MySections:
       MySection=MySections[sec]
       Direction=MySection.Direction
       index=MySection.Index
-      SectionsDict=MySection.TreeToDictionary({})
+      SectionsDict=MySection.TreeToDictionary()
       Sign=MySection.Sign
       #Local coordinate system:
       # - Adjust transformations accordingly to match the global representation
@@ -463,14 +543,18 @@ if __name__=='__main__':
     CYarn0.AssignSection(CSection)
     i=0
     for N in CNodeList:
+       print(N.GetPosition())
        CYarn0.AddNode(N)
        n0=CYarn0.GetNode(i)
        Up=Nodes[i].Up
        Tangent=Nodes[i].Tangent
        CUp=XYZ(Up[0],Up[1],Up[2])        
        CTangent=XYZ(Tangent[0],Tangent[1],Tangent[2])
-       n0.SetTangent(CTangent)
-       n0.SetUp(CUp)
+       try:
+         n0.SetTangent(CTangent)
+         n0.SetUp(CUp)
+       except AttributeError:
+         pass
        i+=1
     CYarn0.AssignInterpolation(Interpolation)
     CYarn0.SetResolution(int(NumSlices*0.6),300)
@@ -480,7 +564,6 @@ if __name__=='__main__':
   AddTextile('Rec',Textile)
   SaveToXML(cwd+'\\Reconstruction2.tg3',"",OUTPUT_STANDARD)
 
-    
 
     
 
