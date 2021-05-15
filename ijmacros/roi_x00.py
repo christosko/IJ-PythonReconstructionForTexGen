@@ -8,7 +8,7 @@ image = IJ.getImage()
 roi = image.getRoi()
 slic=image.getSlice()
 ### Define : 
-insert='Z_33_-1_' + str(slic) + '_-1'
+insert='X_33_0_' + str(slic) # + '_-1'
 ###
 
 if roi:

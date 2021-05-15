@@ -167,23 +167,24 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
         #print(M0.Position, M1.Position)
          self.Nodes.Insert(M0)
          self.Nodes.Insert(M1)
+         #print 'In yarn: '+str(self.Index)+' and section: '+str(S)+' nodes: '+str(2*S)+','+str(2*S+1)
       # Fix duplicate node issue
       Nodes=self.Nodes
-      NodeList=Nodes.GetList()
+      NodeList=Nodes.GetList([])
 
       for i in range(Nodes.CountNodes()-1):
          self.Length+=NodeDistance(NodeList[i],NodeList[i+1])
-
+      SecInd=sorted([i for i in self.Sections])
       #print self.Length
       if len(self.Sections)>1:
          PreLength=0 
-         for S in self.Sections:
-           SecLength=NodeDistance(Nodes.Find(2*S),Nodes.Find(2*S+1))
-           self.Sections[S].UpdateGlobalPositions(self.Length,PreLength,SecLength)
-
+         for i in range(len(self.Sections)):
+           print(NodeList[2*i].Index,NodeList[2*i+1].Index)
+           SecLength=NodeDistance(NodeList[2*i],NodeList[2*i+1])
+           self.Sections[SecInd[i]].UpdateGlobalPositions(self.Length,PreLength,SecLength)
            try:
-             PreLength+=SecLength+NodeDistance(Nodes.Find(2*S+1),Nodes.Find(2*S+2))
-           except AttributeError:
+             PreLength+=SecLength+NodeDistance(NodeList[2*i+1],NodeList[2*i+2])
+           except IndexError:
              pass  
 
       if self.right:
@@ -368,6 +369,7 @@ class MasterNode:
 
            if self.left==None:
               self.left=Node
+              #print str(self.Index)+' assign left node '+str(Node.Index)
            else:
               self.left.Insert(Node)
 
@@ -375,6 +377,7 @@ class MasterNode:
 
            if self.right==None:
               self.right=Node
+              #print str(self.Index)+' assign right node '+str(Node.Index)
            else:
               self.right.Insert(Node)
 
@@ -383,6 +386,7 @@ class MasterNode:
            self.Angle=Node.Angle
            self.Tangent=Node.Tangent
            self.Up=Node.Up
+           #print str(self.Index)+' replace node '+str(Node.Index)
     else:
 
         self=Node
@@ -499,33 +503,37 @@ if __name__=='__main__':
   # Iterate yarn class to extact data and populate corresponding TexGen classes
   for y in MyYarnDict:
     MyYarn=MyYarnDict[y]
-    Nodes=MyYarn.Nodes.GetList()
-    NumSlices=MyYarn.CountSlices()
+    MyNodes=MyYarn.Nodes
+    NodeList=MyNodes.GetList([])
+    NumSlices=MyYarn.CountSlices(0)
     MySections=MyYarn.Sections
     CSection=CYarnSectionInterpPosition()
-    CNodeList=[CNode(XYZ(n.Position[0],n.Position[1],n.Position[2])) for n in Nodes]
+    CNodeList=[CNode(XYZ(n.Position[0],n.Position[1],n.Position[2])) for n in NodeList]
     
+
     for sec in MySections:
       MySection=MySections[sec]
       Direction=MySection.Direction
       index=MySection.Index
-      SectionsDict=MySection.TreeToDictionary()
+      SectionsDict=MySection.TreeToDictionary({})
       Sign=MySection.Sign
       #Local coordinate system:
       # - Adjust transformations accordingly to match the global representation
       for s in SectionsDict:
         CXYVector=XYVector()
         MyPolygon=SectionsDict[s].Polygon
+        N=MyNodes.Find(2*sec)
+
         if Direction in ['X','x']:
-          MNPos=np.array([Nodes[2*sec].Position[1],Nodes[2*sec].Position[2]])
+          MNPos=np.array([N.Position[1],N.Position[2]])
           LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,1.0])
           LocPolygon=LocPolygon[::-1] # Fixes hollow rendering (if needed)
         elif Direction in ['Y','y']:
-          MNPos=np.array([Nodes[2*sec].Position[0],Nodes[2*sec].Position[2]])
+          MNPos=np.array([N.Position[0],N.Position[2]])
           LocPolygon=(MyPolygon-MNPos)*np.array([1.0,1.0])
           LocPolygon=LocPolygon[::-1]
         elif Direction in ['Z','z']:
-          MNPos=np.array([Nodes[2*sec].Position[0],Nodes[2*sec].Position[1]])
+          MNPos=np.array([N.Position[0],N.Position[1]])
           if Sign:
              LocPolygon=(MyPolygon-MNPos)*np.array([1.0,-1.0])
           else:
@@ -537,17 +545,16 @@ if __name__=='__main__':
         CXYList=[XY(p[0],p[1]) for p in LocPolygon]
         for i in CXYList:
           CXYVector.push_back(i)
-        d=SectionsDict[s].d
-        CSection.AddSection(d,CSectionPolygon(CXYVector))
+        #d=SectionsDict[s].d
+        CSection.AddSection(s,CSectionPolygon(CXYVector))
     CYarn0=CYarn()
     CYarn0.AssignSection(CSection)
     i=0
-    for N in CNodeList:
-       print(N.GetPosition())
-       CYarn0.AddNode(N)
+    for n in CNodeList:
+       CYarn0.AddNode(n)
        n0=CYarn0.GetNode(i)
-       Up=Nodes[i].Up
-       Tangent=Nodes[i].Tangent
+       Up=NodeList[i].Up
+       Tangent=NodeList[i].Tangent
        CUp=XYZ(Up[0],Up[1],Up[2])        
        CTangent=XYZ(Tangent[0],Tangent[1],Tangent[2])
        try:
@@ -557,9 +564,10 @@ if __name__=='__main__':
          pass
        i+=1
     CYarn0.AssignInterpolation(Interpolation)
-    CYarn0.SetResolution(int(NumSlices*0.6),300)
+    CYarn0.SetResolution(int(NumSlices*0.6),100)
     Textile.AddYarn(CYarn0)
   #Save tg3 file  
+
   Textile.AssignDomain(CDomain)
   AddTextile('Rec',Textile)
   SaveToXML(cwd+'\\Reconstruction2.tg3',"",OUTPUT_STANDARD)
