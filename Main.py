@@ -29,6 +29,21 @@ def NodeDistance(N0,N1):
   dy=N0.Position[1]-N1.Position[1]
   dz=N0.Position[2]-N1.Position[2]
   return m.sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2))
+def ClosestIndex(Arr,TargetAngle,Centroid):
+  minang=180
+  minind=0
+  i=0
+  for point in Arr:
+    v=point-Centroid
+    vlen=np.linalg.norm(v)
+    vu=v/vlen
+    th=m.atan2(vu[0],vu[1])
+    if abs(TargetAngle-th)<minang:
+      minang=abs(TargetAngle-th)
+      minind=i
+    i+=1
+  print(float(minind)/float(len(Arr)))  
+  return BringToTop(Arr,minind) 
 
 def MatchArrays(Arr1,Arr2):
   tol=1e-9
@@ -59,7 +74,13 @@ def RotateArray(Arr,Portion): # If Portion = 1  : Full rotation
       Arr=np.delete(Arr,-1,0) 
   return Arr 
 
-class Yarns: # This class, after initialised, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
+def BringToTop(Arr,Index): # If Portion = 1  : Full rotation
+  for i in range(Index+1):
+      Arr=np.insert(Arr,-1,Arr[0],0)
+      Arr=np.delete(Arr,0,0) 
+  return Arr 
+
+class Yarns: # This class, after initialisation, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
 
    def __init__(self,Index):
       self.Index=Index
@@ -129,8 +150,8 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
          m1y=np.sum(MaxS.Polygon[:,1])/len(MaxS.Polygon[:,1])
      
          if self.Sections[S].Direction in ['X','x']:
-            m0=np.array([MinS.Slice,m0x,m0y])
-            m1=np.array([MaxS.Slice,m0x,m0y])
+            m0=np.array([MinS.Slice,m1x,m1y])
+            m1=np.array([MaxS.Slice,m1x,m1y])
             t=np.array([1.0,0.0,0.0])
             up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
@@ -143,18 +164,32 @@ class Yarns: # This class, after initialised, takes sections using InsertSection
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)
          elif self.Sections[S].Direction in ['Z','z']:
-            m0=np.array([m0x,m0y,MinS.Slice])
-            m1=np.array([m0x,m0y,MaxS.Slice])
             if self.Sections[S].Sign:
+               if S<0:
+                 x=m1x
+                 y=m1y
+               else:
+                 x=m0x
+                 y=m0y                    
+               m0=np.array([x,y,MinS.Slice])
+               m1=np.array([x,y,MaxS.Slice])
                t=np.array([0.0,0.0,1.0])              
                up=np.array([0.0,-1.0,0.0])                 
                M0=MasterNode(0,m0,0.0,t,up)
                M1=MasterNode(1,m1,0.0,t,up) 
             else:
+               if S<0:
+                 x=m1x
+                 y=m1y
+               else:
+                 x=m0x
+                 y=m0y                
+               m0=np.array([x,y,DS[2]-MinS.Slice])
+               m1=np.array([x,y,DS[2]-MaxS.Slice])              
                t=np.array([0.0,0.0,-1.0])              
                up=np.array([0.0,-1.0,0.0])              
-               M0=MasterNode(0,m1,0.0,t,up)
-               M1=MasterNode(1,m0,0.0,t,up)                                 
+               M1=MasterNode(0,m1,0.0,t,up)
+               M0=MasterNode(1,m0,0.0,t,up)                                 
          else :
             print 'No direction specified for Section:'+str(self.Sections[S].Index)  
          # Rotates polygon point order to match the previous polygon -  not great
@@ -320,7 +355,7 @@ class Section: #Data binary tree for signle direction section sequence - recursi
   def FindMin(self):
    if isinstance(self.Slice,float or int):
        if self.left: 
-          return self.left.FindMin()
+          return self.left.FindMin() 
        return self
 
   def CountNodes(self,Count=0):
@@ -455,7 +490,7 @@ if __name__=='__main__':
   CP1=XYZ(P0[0],P0[1],P0[2])
   CDomain=CDomainPlanes(CP1,CP2) # TexGen domain class
   #Polygon Data folder:
-  DatFold='\\Data3'
+  DatFold='\\Data7'
   os.chdir(cwd+DatFold)
   # Store Files:
   FileList=[(f.replace('.dat','')).split('_') for f in listdir(cwd+DatFold)] # list of info from names
@@ -475,16 +510,16 @@ if __name__=='__main__':
     if Direction in ['Z','z']:
        try: 
           Sign=int(file[4])
-          Slice=DS[2]-Slice
+          Slice=DS[2]-Slice #Reversed Z axis
        except IndexError:
           #Slice=DS[2]-Slice
           pass
-       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[1]])#([DS[0],DS[1]])
+       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0, DS[1]]) #DS[1]])#([DS[0],DS[1]])
     elif Direction in ['X','x']:
        #Slice=DS[0]-Slice
        Polygon=Polygon*np.array([-1.0,-1.0])+np.array([DS[1],DS[2]])
     elif Direction in ['Y','y']:
-       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[2]])             
+       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[2]])#DS[2]])             
     #Populate trees   
     MySection=Section(Index,Slice,Polygon,Direction,Sign)
     MyYarns.InsertSection(YarnIndex,MySection)
@@ -493,23 +528,75 @@ if __name__=='__main__':
   #MyYarns.PrintYarnTree()
   
   MyYarns.AddMasterNodes()
+  
+  ####Correct master nodes for binder yarns: 
+  #correct_masternodes=True
+  #if correct_masternodes : 
+  #  new_master_co=np.genfromtxt(cwd+'\\master_nodes_33.dat')
+  #  
+  #  tang=np.array([[1.0,0.0,0.0],
+  #    [1.0,0.0,0.0],
+  #    [0.0,0.0,-1.0],
+  #    [0.0,0.0,-1.0],
+  #    [1.0,0.0,0.0],
+  #    [1.0,0.0,0.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,0.0,1.0],
+  #    [1.0,0.0,0.0],
+  #    [1.0,0.0,0.0],
+  #    [0.0,0.0,-1.0],
+  #    [0.0,0.0,-1.0],
+  #    [1.0,0.0,0.0],
+  #    [1.0,0.0,0.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,0.0,1.0],
+  #    [1.0,0.0,0.0],
+  #    [1.0,0.0,0.0]])
+  #  upv=np.array([[0.0,0.0,1.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,-1.0,0.0],
+  #    [0.0,-1.0,0.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,-1.0,0.0],
+  #    [0.0,-1.0,0.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,-1.0,0.0],
+  #    [0.0,-1.0,0.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,-1.0,0.0],
+  #    [0.0,-1.0,0.0],
+  #    [0.0,0.0,1.0],
+  #    [0.0,0.0,1.0]])
 
+  #########      
+
+  #######
   # TexGen classes initialisation: 
   Textile=CTextile()
-  Interpolation=CInterpolationLinear(False, False, False)
+  Interpolation=CInterpolationBezier(False, False, False)
   
   #Traverse auxiliary yarn tree and extract yarns
   MyYarnDict=MyYarns.ExtractYarns()
+  
+  #StartAngleX=m.radians(180)
+  #StartAngleZ=m.radians(0)
+
+
   # Iterate yarn class to extact data and populate corresponding TexGen classes
   for y in MyYarnDict:
     MyYarn=MyYarnDict[y]
     MyNodes=MyYarn.Nodes
     NodeList=MyNodes.GetList([])
+    n0y=NodeList[0].Position[1]
     NumSlices=MyYarn.CountSlices(0)
     MySections=MyYarn.Sections
     CSection=CYarnSectionInterpPosition()
     CNodeList=[CNode(XYZ(n.Position[0],n.Position[1],n.Position[2])) for n in NodeList]
     
+
 
     for sec in MySections:
       MySection=MySections[sec]
@@ -526,6 +613,7 @@ if __name__=='__main__':
 
         if Direction in ['X','x']:
           MNPos=np.array([N.Position[1],N.Position[2]])
+          #MyPolygon=ClosestIndex(MyPolygon,StartAngleX,MNPos)
           LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,1.0])
           LocPolygon=LocPolygon[::-1] # Fixes hollow rendering (if needed)
         elif Direction in ['Y','y']:
@@ -534,10 +622,11 @@ if __name__=='__main__':
           LocPolygon=LocPolygon[::-1]
         elif Direction in ['Z','z']:
           MNPos=np.array([N.Position[0],N.Position[1]])
+          #MyPolygon=BringToTop(MyPolygon,3)
           if Sign:
-             LocPolygon=(MyPolygon-MNPos)*np.array([1.0,-1.0])
+             LocPolygon=(MyPolygon-MNPos)*np.array([1.0, -1.0])
           else:
-             LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,-1.0])
+             LocPolygon=(MyPolygon-MNPos)*np.array([-1.0, -1.0])
              LocPolygon=LocPolygon[::-1]
         else:
           print 'Unrecognised direction'   
@@ -564,13 +653,16 @@ if __name__=='__main__':
          pass
        i+=1
     CYarn0.AssignInterpolation(Interpolation)
-    CYarn0.SetResolution(int(NumSlices*0.6),100)
+    if y in [33,34,35,36,37,38,39,40]:
+      CYarn0.SetResolution(int(NumSlices*0.6),60)
+    else:
+      CYarn0.SetResolution(int(NumSlices*0.8),100) 
     Textile.AddYarn(CYarn0)
   #Save tg3 file  
 
   Textile.AssignDomain(CDomain)
-  AddTextile('Rec',Textile)
-  SaveToXML(cwd+'\\Reconstruction2.tg3',"",OUTPUT_STANDARD)
+  AddTextile('Rec4',Textile)
+  SaveToXML(cwd+'\\Reconstruction4.tg3',"",OUTPUT_STANDARD)
 
 
     

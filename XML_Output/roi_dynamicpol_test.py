@@ -59,7 +59,7 @@ class Node:
         self.Control=False
         self.Activations=[]
         #self.Trace=Matrix(Iterations,2)
-        self.FactorThreshold=10.0
+        self.FactorThreshold=15.0
         self.Factors=[]
     def UpdatePosition(self,Dt):
         NewPos=self.PositionV.plus(self.SpeedV.timesEquals(Dt))

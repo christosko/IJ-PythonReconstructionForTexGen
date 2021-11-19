@@ -8,7 +8,7 @@ image = IJ.getImage()
 roi = image.getRoi()
 slic=image.getSlice()
 ### Define : 
-insert='X_40_0_' + str(slic)# + '_-1'
+insert='master_nodes_33' #+ str(slic) #+ '_-1'
 ###
 
 if roi:
@@ -18,7 +18,7 @@ if roi:
     x = polygon.xpoints
     y = polygon.ypoints
 
-    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF55\\Data7\\'
+    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF55\\'
     fileName=insert + '.dat'
     if os.path.isdir(dirPath):
       f = open(dirPath+fileName, 'w')
@@ -31,7 +31,7 @@ if roi:
     
     try:
         for i in range(n_points):
-            f.write(str(x[i])+'  '+str(y[i])+'\n')
+            f.write(str(x[i])+'  '+ str(slic)+'  '+str(y[i])+'\n')
     finally:
         f.close()
     print 'Saved: '+fileName

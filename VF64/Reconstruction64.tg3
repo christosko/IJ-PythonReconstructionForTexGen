@@ -1,0 +1,866 @@
+<?xml version="1.0" ?>
+<TexGenModel version="3.12.0">
+    <Textile name="Rec" YoungsModulusValue="2.000000000000e+05" YoungsModulusUnits="MPa" YoungsModulusYValue="1.000000000000e+04" YoungsModulusYUnits="MPa" YoungsModulusZValue="1.000000000000e+04" YoungsModulusZUnits="MPa" PoissonsRatio="3.000000000000e-01" PoissonsRatioY="4.000000000000e-01" PoissonsRatioZ="4.000000000000e-01" ShearModulusXYValue="5.000000000000e+03" ShearModulusXYUnits="MPa" ShearModulusXZValue="5.000000000000e+03" ShearModulusXZUnits="MPa" ShearModulusYZValue="5.000000000000e+03" ShearModulusYZUnits="MPa" AlphaXValue="-2.000000000000e-07" AlphaXUnits="/K" AlphaYValue="3.000000000000e-06" AlphaYUnits="/K" AlphaZValue="3.000000000000e-06" AlphaZUnits="/K" GeometryScale="mm" MatrixYoungsModulusValue="3.000000000000e+03" MatrixYoungsModulusUnits="MPa" MatrixPoissonsRatio="2.000000000000e-01" MatrixAlpha="6.500000000000e-06" type="CTextile" NeedsBuilding="0">
+        <Domain type="CDomainPlanes">
+            <Plane Normal="1.000000000000e+00, 0.000000000000e+00, 0.000000000000e+00" d="0.000000000000e+00" />
+            <Plane Normal="-1.000000000000e+00, 0.000000000000e+00, 0.000000000000e+00" d="-7.044800000000e+00" />
+            <Plane Normal="0.000000000000e+00, 1.000000000000e+00, 0.000000000000e+00" d="0.000000000000e+00" />
+            <Plane Normal="0.000000000000e+00, -1.000000000000e+00, 0.000000000000e+00" d="-4.474400000000e+00" />
+            <Plane Normal="0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00" d="0.000000000000e+00" />
+            <Plane Normal="0.000000000000e+00, 0.000000000000e+00, -1.000000000000e+00" d="4.080000000000e+00" />
+        </Domain>
+        <Yarn index="0" YoungsModulusValue="2.000000000000e+05" YoungsModulusUnits="MPa" YoungsModulusYValue="1.000000000000e+04" YoungsModulusYUnits="MPa" YoungsModulusZValue="1.000000000000e+04" YoungsModulusZUnits="MPa" PoissonsRatio="3.000000000000e-01" PoissonsRatioY="4.000000000000e-01" PoissonsRatioZ="4.000000000000e-01" ShearModulusXYValue="5.000000000000e+03" ShearModulusXYUnits="MPa" ShearModulusXZValue="5.000000000000e+03" ShearModulusXZUnits="MPa" ShearModulusYZValue="5.000000000000e+03" ShearModulusYZUnits="MPa" AlphaXValue="-2.000000000000e-07" AlphaXUnits="/K" AlphaYValue="3.000000000000e-06" AlphaYUnits="/K" AlphaZValue="3.000000000000e-06" AlphaZUnits="/K" NumSlaveNodes="14" NumSectionPoints="100" NeedsBuilding="7">
+            <Interpolation Periodic="0" ForceInPlaneTangent="0" ForceMasterNodeTangent="0" type="CInterpolationLinear" />
+            <YarnSection type="CYarnSectionInterpPosition" ConstMesh="1" Ramped="1" Polar="0">
+                <PositionSection t="0.000000000000e+00">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-3.248888888889e-02, -5.288888888889e-03" />
+                        <PolygonPoint value="-2.568888888889e-02, -1.888888888889e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, -2.568888888889e-02" />
+                        <PolygonPoint value="8.311111111111e-03, -2.568888888889e-02" />
+                        <PolygonPoint value="2.871111111111e-02, -5.288888888889e-03" />
+                        <PolygonPoint value="2.871111111111e-02, 1.511111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-02, 2.191111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-03, 2.871111111111e-02" />
+                        <PolygonPoint value="-1.888888888889e-02, 1.511111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="4.000000000000e-02">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-2.568888888889e-02, 1.511111111111e-03" />
+                        <PolygonPoint value="-1.208888888889e-02, -1.888888888889e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, -3.248888888889e-02" />
+                        <PolygonPoint value="1.511111111111e-02, -3.248888888889e-02" />
+                        <PolygonPoint value="2.871111111111e-02, -3.248888888889e-02" />
+                        <PolygonPoint value="4.231111111111e-02, -2.568888888889e-02" />
+                        <PolygonPoint value="5.591111111111e-02, -1.208888888889e-02" />
+                        <PolygonPoint value="6.271111111111e-02, 1.511111111111e-03" />
+                        <PolygonPoint value="6.271111111111e-02, 2.191111111111e-02" />
+                        <PolygonPoint value="4.911111111111e-02, 3.551111111111e-02" />
+                        <PolygonPoint value="3.551111111111e-02, 4.911111111111e-02" />
+                        <PolygonPoint value="8.311111111111e-03, 4.911111111111e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, 4.231111111111e-02" />
+                        <PolygonPoint value="-1.888888888889e-02, 2.871111111111e-02" />
+                        <PolygonPoint value="-2.568888888889e-02, 2.191111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="8.000000000000e-02">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-5.968888888889e-02, 1.511111111111e-03" />
+                        <PolygonPoint value="-5.288888888889e-02, -2.568888888889e-02" />
+                        <PolygonPoint value="-2.568888888889e-02, -5.968888888889e-02" />
+                        <PolygonPoint value="1.511111111111e-02, -5.968888888889e-02" />
+                        <PolygonPoint value="3.551111111111e-02, -5.968888888889e-02" />
+                        <PolygonPoint value="6.271111111111e-02, -4.608888888889e-02" />
+                        <PolygonPoint value="8.311111111111e-02, -2.568888888889e-02" />
+                        <PolygonPoint value="9.671111111111e-02, 1.511111111111e-03" />
+                        <PolygonPoint value="8.991111111111e-02, 2.871111111111e-02" />
+                        <PolygonPoint value="6.951111111111e-02, 4.911111111111e-02" />
+                        <PolygonPoint value="5.591111111111e-02, 6.951111111111e-02" />
+                        <PolygonPoint value="2.871111111111e-02, 7.631111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-03, 7.631111111111e-02" />
+                        <PolygonPoint value="-1.888888888889e-02, 6.951111111111e-02" />
+                        <PolygonPoint value="-3.928888888889e-02, 5.591111111111e-02" />
+                        <PolygonPoint value="-5.288888888889e-02, 3.551111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="1.200000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-5.968888888889e-02, 5.591111111111e-02" />
+                        <PolygonPoint value="-6.648888888889e-02, 3.551111111111e-02" />
+                        <PolygonPoint value="-7.328888888889e-02, 8.311111111111e-03" />
+                        <PolygonPoint value="-6.648888888889e-02, -1.208888888889e-02" />
+                        <PolygonPoint value="-5.288888888889e-02, -4.608888888889e-02" />
+                        <PolygonPoint value="-3.248888888889e-02, -7.328888888889e-02" />
+                        <PolygonPoint value="1.511111111111e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="5.591111111111e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="8.991111111111e-02, -6.648888888889e-02" />
+                        <PolygonPoint value="1.239111111111e-01, -3.248888888889e-02" />
+                        <PolygonPoint value="1.307111111111e-01, -1.208888888889e-02" />
+                        <PolygonPoint value="1.239111111111e-01, 2.191111111111e-02" />
+                        <PolygonPoint value="1.171111111111e-01, 4.231111111111e-02" />
+                        <PolygonPoint value="8.991111111111e-02, 7.631111111111e-02" />
+                        <PolygonPoint value="5.591111111111e-02, 9.671111111111e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, 9.671111111111e-02" />
+                        <PolygonPoint value="-3.248888888889e-02, 8.311111111111e-02" />
+                        <PolygonPoint value="-5.288888888889e-02, 6.271111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="1.600000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-7.328888888889e-02, 6.271111111111e-02" />
+                        <PolygonPoint value="-8.008888888889e-02, 3.551111111111e-02" />
+                        <PolygonPoint value="-8.008888888889e-02, -5.288888888889e-03" />
+                        <PolygonPoint value="-7.328888888889e-02, -3.928888888889e-02" />
+                        <PolygonPoint value="-3.928888888889e-02, -6.648888888889e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, -8.008888888889e-02" />
+                        <PolygonPoint value="6.271111111111e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="1.035111111111e-01, -6.648888888889e-02" />
+                        <PolygonPoint value="1.307111111111e-01, -5.968888888889e-02" />
+                        <PolygonPoint value="1.443111111111e-01, -4.608888888889e-02" />
+                        <PolygonPoint value="1.579111111111e-01, -1.888888888889e-02" />
+                        <PolygonPoint value="1.579111111111e-01, 8.311111111111e-03" />
+                        <PolygonPoint value="1.443111111111e-01, 3.551111111111e-02" />
+                        <PolygonPoint value="1.307111111111e-01, 6.951111111111e-02" />
+                        <PolygonPoint value="9.671111111111e-02, 9.671111111111e-02" />
+                        <PolygonPoint value="6.951111111111e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="1.511111111111e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="-1.208888888889e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="-3.928888888889e-02, 9.671111111111e-02" />
+                        <PolygonPoint value="-5.968888888889e-02, 7.631111111111e-02" />
+                        <PolygonPoint value="-6.648888888889e-02, 6.951111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="2.000000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-9.368888888889e-02, 4.911111111111e-02" />
+                        <PolygonPoint value="-9.368888888889e-02, 1.511111111111e-02" />
+                        <PolygonPoint value="-9.368888888889e-02, -3.248888888889e-02" />
+                        <PolygonPoint value="-6.648888888889e-02, -5.968888888889e-02" />
+                        <PolygonPoint value="-3.928888888889e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, -8.008888888889e-02" />
+                        <PolygonPoint value="4.911111111111e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="1.035111111111e-01, -8.008888888889e-02" />
+                        <PolygonPoint value="1.307111111111e-01, -6.648888888889e-02" />
+                        <PolygonPoint value="1.647111111111e-01, -3.928888888889e-02" />
+                        <PolygonPoint value="1.715111111111e-01, -1.888888888889e-02" />
+                        <PolygonPoint value="1.715111111111e-01, 1.511111111111e-02" />
+                        <PolygonPoint value="1.647111111111e-01, 2.871111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-01, 5.591111111111e-02" />
+                        <PolygonPoint value="1.239111111111e-01, 8.991111111111e-02" />
+                        <PolygonPoint value="8.991111111111e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="4.231111111111e-02, 1.171111111111e-01" />
+                        <PolygonPoint value="-1.208888888889e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="-3.248888888889e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="-5.968888888889e-02, 8.991111111111e-02" />
+                        <PolygonPoint value="-7.328888888889e-02, 7.631111111111e-02" />
+                        <PolygonPoint value="-8.688888888889e-02, 6.271111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="2.400000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-9.368888888889e-02, 8.311111111111e-03" />
+                        <PolygonPoint value="-8.688888888889e-02, -1.888888888889e-02" />
+                        <PolygonPoint value="-6.648888888889e-02, -5.288888888889e-02" />
+                        <PolygonPoint value="-3.928888888889e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="8.311111111111e-03, -8.688888888889e-02" />
+                        <PolygonPoint value="7.631111111111e-02, -8.688888888889e-02" />
+                        <PolygonPoint value="1.239111111111e-01, -8.008888888889e-02" />
+                        <PolygonPoint value="1.579111111111e-01, -5.968888888889e-02" />
+                        <PolygonPoint value="1.715111111111e-01, -4.608888888889e-02" />
+                        <PolygonPoint value="1.919111111111e-01, -1.888888888889e-02" />
+                        <PolygonPoint value="1.919111111111e-01, 1.511111111111e-02" />
+                        <PolygonPoint value="1.783111111111e-01, 4.911111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-01, 8.311111111111e-02" />
+                        <PolygonPoint value="1.171111111111e-01, 1.103111111111e-01" />
+                        <PolygonPoint value="7.631111111111e-02, 1.239111111111e-01" />
+                        <PolygonPoint value="1.511111111111e-02, 1.239111111111e-01" />
+                        <PolygonPoint value="-1.888888888889e-02, 1.171111111111e-01" />
+                        <PolygonPoint value="-3.928888888889e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="-7.328888888889e-02, 8.991111111111e-02" />
+                        <PolygonPoint value="-8.008888888889e-02, 6.271111111111e-02" />
+                        <PolygonPoint value="-9.368888888889e-02, 3.551111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="3.200000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-1.004888888889e-01, 4.911111111111e-02" />
+                        <PolygonPoint value="-1.004888888889e-01, 1.511111111111e-02" />
+                        <PolygonPoint value="-1.004888888889e-01, -2.568888888889e-02" />
+                        <PolygonPoint value="-6.648888888889e-02, -6.648888888889e-02" />
+                        <PolygonPoint value="-2.568888888889e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="4.231111111111e-02, -8.688888888889e-02" />
+                        <PolygonPoint value="9.671111111111e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="1.511111111111e-01, -7.328888888889e-02" />
+                        <PolygonPoint value="1.919111111111e-01, -5.288888888889e-02" />
+                        <PolygonPoint value="2.123111111111e-01, -2.568888888889e-02" />
+                        <PolygonPoint value="2.191111111111e-01, 8.311111111111e-03" />
+                        <PolygonPoint value="2.055111111111e-01, 3.551111111111e-02" />
+                        <PolygonPoint value="1.851111111111e-01, 6.951111111111e-02" />
+                        <PolygonPoint value="1.579111111111e-01, 1.035111111111e-01" />
+                        <PolygonPoint value="1.171111111111e-01, 1.239111111111e-01" />
+                        <PolygonPoint value="7.631111111111e-02, 1.375111111111e-01" />
+                        <PolygonPoint value="1.511111111111e-03, 1.375111111111e-01" />
+                        <PolygonPoint value="-3.928888888889e-02, 1.239111111111e-01" />
+                        <PolygonPoint value="-7.328888888889e-02, 1.035111111111e-01" />
+                        <PolygonPoint value="-8.688888888889e-02, 7.631111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="4.000000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-1.072888888889e-01, 3.551111111111e-02" />
+                        <PolygonPoint value="-1.072888888889e-01, -1.208888888889e-02" />
+                        <PolygonPoint value="-8.688888888889e-02, -5.968888888889e-02" />
+                        <PolygonPoint value="-5.288888888889e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, -9.368888888889e-02" />
+                        <PolygonPoint value="7.631111111111e-02, -9.368888888889e-02" />
+                        <PolygonPoint value="1.239111111111e-01, -8.688888888889e-02" />
+                        <PolygonPoint value="1.647111111111e-01, -7.328888888889e-02" />
+                        <PolygonPoint value="1.987111111111e-01, -5.288888888889e-02" />
+                        <PolygonPoint value="2.191111111111e-01, -3.248888888889e-02" />
+                        <PolygonPoint value="2.191111111111e-01, 8.311111111111e-03" />
+                        <PolygonPoint value="2.055111111111e-01, 4.911111111111e-02" />
+                        <PolygonPoint value="1.851111111111e-01, 8.311111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-01, 1.103111111111e-01" />
+                        <PolygonPoint value="1.035111111111e-01, 1.307111111111e-01" />
+                        <PolygonPoint value="2.871111111111e-02, 1.307111111111e-01" />
+                        <PolygonPoint value="-2.568888888889e-02, 1.239111111111e-01" />
+                        <PolygonPoint value="-5.968888888889e-02, 1.171111111111e-01" />
+                        <PolygonPoint value="-8.008888888889e-02, 9.671111111111e-02" />
+                        <PolygonPoint value="-9.368888888889e-02, 7.631111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="4.800000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-1.140888888889e-01, 2.191111111111e-02" />
+                        <PolygonPoint value="-1.072888888889e-01, -1.888888888889e-02" />
+                        <PolygonPoint value="-8.688888888889e-02, -5.288888888889e-02" />
+                        <PolygonPoint value="-4.608888888889e-02, -8.688888888889e-02" />
+                        <PolygonPoint value="1.511111111111e-02, -9.368888888889e-02" />
+                        <PolygonPoint value="1.035111111111e-01, -9.368888888889e-02" />
+                        <PolygonPoint value="1.715111111111e-01, -7.328888888889e-02" />
+                        <PolygonPoint value="2.123111111111e-01, -4.608888888889e-02" />
+                        <PolygonPoint value="2.191111111111e-01, -1.208888888889e-02" />
+                        <PolygonPoint value="2.191111111111e-01, 2.191111111111e-02" />
+                        <PolygonPoint value="2.123111111111e-01, 4.911111111111e-02" />
+                        <PolygonPoint value="1.919111111111e-01, 8.311111111111e-02" />
+                        <PolygonPoint value="1.579111111111e-01, 1.103111111111e-01" />
+                        <PolygonPoint value="1.171111111111e-01, 1.307111111111e-01" />
+                        <PolygonPoint value="6.271111111111e-02, 1.375111111111e-01" />
+                        <PolygonPoint value="-1.208888888889e-02, 1.375111111111e-01" />
+                        <PolygonPoint value="-6.648888888889e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="-8.688888888889e-02, 8.311111111111e-02" />
+                        <PolygonPoint value="-1.072888888889e-01, 5.591111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="6.000000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-1.004888888889e-01, 6.271111111111e-02" />
+                        <PolygonPoint value="-1.072888888889e-01, 2.191111111111e-02" />
+                        <PolygonPoint value="-1.004888888889e-01, -2.568888888889e-02" />
+                        <PolygonPoint value="-8.008888888889e-02, -6.648888888889e-02" />
+                        <PolygonPoint value="-3.928888888889e-02, -8.688888888889e-02" />
+                        <PolygonPoint value="1.511111111111e-02, -9.368888888889e-02" />
+                        <PolygonPoint value="8.991111111111e-02, -9.368888888889e-02" />
+                        <PolygonPoint value="1.579111111111e-01, -7.328888888889e-02" />
+                        <PolygonPoint value="1.987111111111e-01, -5.288888888889e-02" />
+                        <PolygonPoint value="2.123111111111e-01, -3.928888888889e-02" />
+                        <PolygonPoint value="2.191111111111e-01, -1.208888888889e-02" />
+                        <PolygonPoint value="2.191111111111e-01, 2.191111111111e-02" />
+                        <PolygonPoint value="1.919111111111e-01, 6.271111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-01, 1.103111111111e-01" />
+                        <PolygonPoint value="9.671111111111e-02, 1.307111111111e-01" />
+                        <PolygonPoint value="2.871111111111e-02, 1.375111111111e-01" />
+                        <PolygonPoint value="-2.568888888889e-02, 1.307111111111e-01" />
+                        <PolygonPoint value="-5.968888888889e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="-8.688888888889e-02, 8.311111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="6.800000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-1.072888888889e-01, 1.511111111111e-02" />
+                        <PolygonPoint value="-1.004888888889e-01, -2.568888888889e-02" />
+                        <PolygonPoint value="-7.328888888889e-02, -6.648888888889e-02" />
+                        <PolygonPoint value="-2.568888888889e-02, -9.368888888889e-02" />
+                        <PolygonPoint value="6.271111111111e-02, -9.368888888889e-02" />
+                        <PolygonPoint value="1.239111111111e-01, -8.688888888889e-02" />
+                        <PolygonPoint value="1.647111111111e-01, -6.648888888889e-02" />
+                        <PolygonPoint value="1.919111111111e-01, -5.288888888889e-02" />
+                        <PolygonPoint value="2.055111111111e-01, -1.888888888889e-02" />
+                        <PolygonPoint value="2.055111111111e-01, 8.311111111111e-03" />
+                        <PolygonPoint value="1.919111111111e-01, 5.591111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-01, 8.991111111111e-02" />
+                        <PolygonPoint value="1.103111111111e-01, 1.171111111111e-01" />
+                        <PolygonPoint value="6.271111111111e-02, 1.239111111111e-01" />
+                        <PolygonPoint value="-5.288888888888e-03, 1.239111111111e-01" />
+                        <PolygonPoint value="-4.608888888889e-02, 1.103111111111e-01" />
+                        <PolygonPoint value="-8.008888888889e-02, 8.311111111111e-02" />
+                        <PolygonPoint value="-1.004888888889e-01, 4.911111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="7.600000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-1.004888888889e-01, 3.551111111111e-02" />
+                        <PolygonPoint value="-1.004888888889e-01, -5.288888888889e-03" />
+                        <PolygonPoint value="-9.368888888889e-02, -4.608888888889e-02" />
+                        <PolygonPoint value="-4.608888888889e-02, -7.328888888889e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, -8.688888888889e-02" />
+                        <PolygonPoint value="7.631111111111e-02, -8.688888888889e-02" />
+                        <PolygonPoint value="1.375111111111e-01, -6.648888888889e-02" />
+                        <PolygonPoint value="1.715111111111e-01, -5.968888888889e-02" />
+                        <PolygonPoint value="1.783111111111e-01, -3.928888888889e-02" />
+                        <PolygonPoint value="1.851111111111e-01, 1.511111111111e-03" />
+                        <PolygonPoint value="1.783111111111e-01, 2.871111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-01, 6.271111111111e-02" />
+                        <PolygonPoint value="1.171111111111e-01, 8.991111111111e-02" />
+                        <PolygonPoint value="6.271111111111e-02, 1.171111111111e-01" />
+                        <PolygonPoint value="-1.208888888889e-02, 1.171111111111e-01" />
+                        <PolygonPoint value="-5.968888888889e-02, 9.671111111111e-02" />
+                        <PolygonPoint value="-8.688888888889e-02, 6.271111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="8.400000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-8.688888888889e-02, 8.311111111111e-03" />
+                        <PolygonPoint value="-8.688888888889e-02, -2.568888888889e-02" />
+                        <PolygonPoint value="-6.648888888889e-02, -5.968888888889e-02" />
+                        <PolygonPoint value="-3.928888888889e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="2.871111111111e-02, -9.368888888889e-02" />
+                        <PolygonPoint value="8.311111111111e-02, -8.688888888889e-02" />
+                        <PolygonPoint value="1.171111111111e-01, -6.648888888889e-02" />
+                        <PolygonPoint value="1.443111111111e-01, -5.288888888889e-02" />
+                        <PolygonPoint value="1.511111111111e-01, -1.888888888889e-02" />
+                        <PolygonPoint value="1.443111111111e-01, 8.311111111111e-03" />
+                        <PolygonPoint value="1.307111111111e-01, 4.231111111111e-02" />
+                        <PolygonPoint value="9.671111111111e-02, 6.951111111111e-02" />
+                        <PolygonPoint value="6.271111111111e-02, 8.991111111111e-02" />
+                        <PolygonPoint value="1.511111111111e-03, 9.671111111111e-02" />
+                        <PolygonPoint value="-3.248888888889e-02, 8.991111111111e-02" />
+                        <PolygonPoint value="-6.648888888889e-02, 6.271111111111e-02" />
+                        <PolygonPoint value="-8.008888888889e-02, 3.551111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="8.800000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-8.008888888889e-02, 1.511111111111e-02" />
+                        <PolygonPoint value="-7.328888888889e-02, -2.568888888889e-02" />
+                        <PolygonPoint value="-6.648888888889e-02, -5.288888888889e-02" />
+                        <PolygonPoint value="-3.248888888889e-02, -7.328888888889e-02" />
+                        <PolygonPoint value="8.311111111111e-03, -8.688888888889e-02" />
+                        <PolygonPoint value="5.591111111111e-02, -8.688888888889e-02" />
+                        <PolygonPoint value="1.035111111111e-01, -7.328888888889e-02" />
+                        <PolygonPoint value="1.239111111111e-01, -5.288888888889e-02" />
+                        <PolygonPoint value="1.307111111111e-01, -2.568888888889e-02" />
+                        <PolygonPoint value="1.239111111111e-01, 8.311111111111e-03" />
+                        <PolygonPoint value="1.035111111111e-01, 3.551111111111e-02" />
+                        <PolygonPoint value="6.951111111111e-02, 6.951111111111e-02" />
+                        <PolygonPoint value="2.191111111111e-02, 8.311111111111e-02" />
+                        <PolygonPoint value="-1.888888888889e-02, 7.631111111111e-02" />
+                        <PolygonPoint value="-5.288888888889e-02, 5.591111111111e-02" />
+                        <PolygonPoint value="-7.328888888889e-02, 2.871111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="9.200000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-6.648888888889e-02, -1.208888888889e-02" />
+                        <PolygonPoint value="-5.968888888889e-02, -4.608888888889e-02" />
+                        <PolygonPoint value="-3.928888888889e-02, -7.328888888889e-02" />
+                        <PolygonPoint value="2.871111111111e-02, -8.688888888889e-02" />
+                        <PolygonPoint value="6.951111111111e-02, -8.008888888889e-02" />
+                        <PolygonPoint value="9.671111111111e-02, -5.288888888889e-02" />
+                        <PolygonPoint value="1.035111111111e-01, -1.888888888889e-02" />
+                        <PolygonPoint value="1.035111111111e-01, 1.511111111111e-03" />
+                        <PolygonPoint value="8.311111111111e-02, 2.871111111111e-02" />
+                        <PolygonPoint value="6.271111111111e-02, 4.231111111111e-02" />
+                        <PolygonPoint value="3.551111111111e-02, 6.271111111111e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, 6.271111111111e-02" />
+                        <PolygonPoint value="-3.928888888889e-02, 4.231111111111e-02" />
+                        <PolygonPoint value="-5.968888888889e-02, 2.191111111111e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="9.600000000000e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-4.608888888889e-02, -2.568888888889e-02" />
+                        <PolygonPoint value="-3.248888888889e-02, -5.288888888889e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, -6.648888888889e-02" />
+                        <PolygonPoint value="3.551111111111e-02, -5.968888888889e-02" />
+                        <PolygonPoint value="6.271111111111e-02, -5.288888888889e-02" />
+                        <PolygonPoint value="8.311111111111e-02, -2.568888888889e-02" />
+                        <PolygonPoint value="8.311111111111e-02, -5.288888888889e-03" />
+                        <PolygonPoint value="7.631111111111e-02, 1.511111111111e-02" />
+                        <PolygonPoint value="5.591111111111e-02, 3.551111111111e-02" />
+                        <PolygonPoint value="3.551111111111e-02, 4.911111111111e-02" />
+                        <PolygonPoint value="8.311111111111e-03, 4.911111111111e-02" />
+                        <PolygonPoint value="-2.568888888889e-02, 3.551111111111e-02" />
+                        <PolygonPoint value="-4.608888888889e-02, 8.311111111111e-03" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="1.000000000000e+00">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-1.888888888889e-02, -2.568888888889e-02" />
+                        <PolygonPoint value="1.511111111111e-03, -3.928888888889e-02" />
+                        <PolygonPoint value="2.191111111111e-02, -4.608888888889e-02" />
+                        <PolygonPoint value="4.231111111111e-02, -3.928888888889e-02" />
+                        <PolygonPoint value="5.591111111111e-02, -1.888888888889e-02" />
+                        <PolygonPoint value="4.911111111111e-02, 1.511111111111e-03" />
+                        <PolygonPoint value="4.231111111111e-02, 1.511111111111e-02" />
+                        <PolygonPoint value="2.871111111111e-02, 2.191111111111e-02" />
+                        <PolygonPoint value="-5.288888888888e-03, 1.511111111111e-02" />
+                        <PolygonPoint value="-1.888888888889e-02, 1.511111111111e-03" />
+                    </Section>
+                </PositionSection>
+            </YarnSection>
+            <FibreDistribution type="CFibreDistributionConst" />
+            <MasterNode index="0" Position="3.493688888889e+00, 1.788400000000e+00, -1.184711111111e+00" Tangent="0.000000000000e+00, 1.000000000000e+00, 0.000000000000e+00" Up="0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00" Angle="0.000000000000e+00" />
+            <MasterNode index="1" Position="3.493688888889e+00, 1.958400000000e+00, -1.184711111111e+00" Tangent="0.000000000000e+00, 1.000000000000e+00, 0.000000000000e+00" Up="0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00" Angle="0.000000000000e+00" />
+        </Yarn>
+        <Yarn index="1" YoungsModulusValue="2.000000000000e+05" YoungsModulusUnits="MPa" YoungsModulusYValue="1.000000000000e+04" YoungsModulusYUnits="MPa" YoungsModulusZValue="1.000000000000e+04" YoungsModulusZUnits="MPa" PoissonsRatio="3.000000000000e-01" PoissonsRatioY="4.000000000000e-01" PoissonsRatioZ="4.000000000000e-01" ShearModulusXYValue="5.000000000000e+03" ShearModulusXYUnits="MPa" ShearModulusXZValue="5.000000000000e+03" ShearModulusXZUnits="MPa" ShearModulusYZValue="5.000000000000e+03" ShearModulusYZUnits="MPa" AlphaXValue="-2.000000000000e-07" AlphaXUnits="/K" AlphaYValue="3.000000000000e-06" AlphaYUnits="/K" AlphaZValue="3.000000000000e-06" AlphaZUnits="/K" NumSlaveNodes="16" NumSectionPoints="100" NeedsBuilding="7">
+            <Interpolation Periodic="0" ForceInPlaneTangent="0" ForceMasterNodeTangent="0" type="CInterpolationLinear" />
+            <YarnSection type="CYarnSectionInterpPosition" ConstMesh="1" Ramped="1" Polar="0">
+                <PositionSection t="0.000000000000e+00">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-6.800000000000e-03, 8.500000000000e-04" />
+                        <PolygonPoint value="-6.800000000000e-03, -5.950000000000e-03" />
+                        <PolygonPoint value="0.000000000000e+00, -1.275000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-03, -5.950000000000e-03" />
+                        <PolygonPoint value="6.800000000000e-03, 8.500000000000e-04" />
+                        <PolygonPoint value="6.800000000000e-03, 7.650000000000e-03" />
+                        <PolygonPoint value="0.000000000000e+00, 7.650000000000e-03" />
+                        <PolygonPoint value="-6.800000000000e-03, 7.650000000000e-03" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="3.703703703704e-02">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-3.400000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="-2.720000000000e-02, -2.635000000000e-02" />
+                        <PolygonPoint value="-2.040000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-03, -4.675000000000e-02" />
+                        <PolygonPoint value="2.040000000000e-02, -4.675000000000e-02" />
+                        <PolygonPoint value="3.400000000000e-02, -3.315000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, -2.635000000000e-02" />
+                        <PolygonPoint value="4.760000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="4.080000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="3.400000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="1.360000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="-1.360000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, 1.445000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="7.407407407407e-02">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-4.760000000000e-02, 7.650000000000e-03" />
+                        <PolygonPoint value="-4.760000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, -5.355000000000e-02" />
+                        <PolygonPoint value="-2.040000000000e-02, -6.715000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-03, -7.395000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-03, -7.395000000000e-02" />
+                        <PolygonPoint value="2.720000000000e-02, -7.395000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, -6.035000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, -5.355000000000e-02" />
+                        <PolygonPoint value="6.120000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-02, -1.955000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-02, 8.500000000000e-04" />
+                        <PolygonPoint value="5.440000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="3.400000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="1.360000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-2.040000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, 1.445000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="1.111111111111e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-5.440000000000e-02, 8.500000000000e-04" />
+                        <PolygonPoint value="-4.760000000000e-02, -1.955000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, -5.355000000000e-02" />
+                        <PolygonPoint value="-2.040000000000e-02, -7.395000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-03, -8.075000000000e-02" />
+                        <PolygonPoint value="2.720000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, -7.395000000000e-02" />
+                        <PolygonPoint value="6.120000000000e-02, -6.035000000000e-02" />
+                        <PolygonPoint value="7.480000000000e-02, -4.675000000000e-02" />
+                        <PolygonPoint value="8.160000000000e-02, -2.635000000000e-02" />
+                        <PolygonPoint value="8.160000000000e-02, 8.500000000000e-04" />
+                        <PolygonPoint value="6.800000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="6.120000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-03, 4.845000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, 1.445000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="1.481481481481e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-5.440000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, -3.315000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, -6.035000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="-1.360000000000e-02, -9.435000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-03, -9.435000000000e-02" />
+                        <PolygonPoint value="2.720000000000e-02, -9.435000000000e-02" />
+                        <PolygonPoint value="4.760000000000e-02, -8.755000000000e-02" />
+                        <PolygonPoint value="6.120000000000e-02, -7.395000000000e-02" />
+                        <PolygonPoint value="8.160000000000e-02, -5.355000000000e-02" />
+                        <PolygonPoint value="8.840000000000e-02, -3.315000000000e-02" />
+                        <PolygonPoint value="8.840000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="8.840000000000e-02, 7.650000000000e-03" />
+                        <PolygonPoint value="6.800000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="4.760000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="2.040000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="-2.040000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 8.500000000000e-04" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="1.851851851852e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-6.120000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, -3.315000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, -6.715000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, -8.755000000000e-02" />
+                        <PolygonPoint value="-1.360000000000e-02, -1.011500000000e-01" />
+                        <PolygonPoint value="2.720000000000e-02, -1.011500000000e-01" />
+                        <PolygonPoint value="4.760000000000e-02, -9.435000000000e-02" />
+                        <PolygonPoint value="7.480000000000e-02, -7.395000000000e-02" />
+                        <PolygonPoint value="9.520000000000e-02, -4.675000000000e-02" />
+                        <PolygonPoint value="9.520000000000e-02, -1.955000000000e-02" />
+                        <PolygonPoint value="9.520000000000e-02, 7.650000000000e-03" />
+                        <PolygonPoint value="8.160000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="4.760000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="1.360000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 3.485000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="2.592592592593e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-6.120000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="-6.120000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, -1.079500000000e-01" />
+                        <PolygonPoint value="6.800000000000e-03, -1.147500000000e-01" />
+                        <PolygonPoint value="4.080000000000e-02, -1.079500000000e-01" />
+                        <PolygonPoint value="6.800000000000e-02, -9.435000000000e-02" />
+                        <PolygonPoint value="9.520000000000e-02, -7.395000000000e-02" />
+                        <PolygonPoint value="1.020000000000e-01, -3.995000000000e-02" />
+                        <PolygonPoint value="1.020000000000e-01, -5.950000000000e-03" />
+                        <PolygonPoint value="1.020000000000e-01, 1.445000000000e-02" />
+                        <PolygonPoint value="8.160000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-03, 6.205000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, 2.125000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="3.333333333333e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-7.480000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="-6.120000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, -1.079500000000e-01" />
+                        <PolygonPoint value="-2.040000000000e-02, -1.215500000000e-01" />
+                        <PolygonPoint value="2.040000000000e-02, -1.215500000000e-01" />
+                        <PolygonPoint value="5.440000000000e-02, -1.079500000000e-01" />
+                        <PolygonPoint value="8.840000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="1.020000000000e-01, -6.715000000000e-02" />
+                        <PolygonPoint value="1.088000000000e-01, -2.635000000000e-02" />
+                        <PolygonPoint value="1.088000000000e-01, 8.500000000000e-04" />
+                        <PolygonPoint value="1.020000000000e-01, 2.125000000000e-02" />
+                        <PolygonPoint value="8.160000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="4.760000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="0.000000000000e+00, 6.205000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 4.165000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="4.074074074074e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-7.480000000000e-02, 2.125000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="-6.800000000000e-02, -4.675000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -6.715000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, -8.755000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, -1.079500000000e-01" />
+                        <PolygonPoint value="-6.800000000000e-03, -1.147500000000e-01" />
+                        <PolygonPoint value="2.040000000000e-02, -1.147500000000e-01" />
+                        <PolygonPoint value="4.080000000000e-02, -1.147500000000e-01" />
+                        <PolygonPoint value="6.120000000000e-02, -1.011500000000e-01" />
+                        <PolygonPoint value="8.840000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="1.156000000000e-01, -4.675000000000e-02" />
+                        <PolygonPoint value="1.156000000000e-01, -1.955000000000e-02" />
+                        <PolygonPoint value="1.156000000000e-01, 1.445000000000e-02" />
+                        <PolygonPoint value="1.020000000000e-01, 3.485000000000e-02" />
+                        <PolygonPoint value="8.840000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="2.040000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.205000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="4.814814814815e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-7.480000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="-7.480000000000e-02, -5.355000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -8.755000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, -1.147500000000e-01" />
+                        <PolygonPoint value="6.800000000000e-03, -1.147500000000e-01" />
+                        <PolygonPoint value="3.400000000000e-02, -1.147500000000e-01" />
+                        <PolygonPoint value="7.480000000000e-02, -9.435000000000e-02" />
+                        <PolygonPoint value="9.520000000000e-02, -6.715000000000e-02" />
+                        <PolygonPoint value="1.156000000000e-01, -3.315000000000e-02" />
+                        <PolygonPoint value="1.156000000000e-01, -5.950000000000e-03" />
+                        <PolygonPoint value="1.088000000000e-01, 2.125000000000e-02" />
+                        <PolygonPoint value="9.520000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="7.480000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="3.400000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.205000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="5.555555555556e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-7.480000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, -4.675000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -7.395000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, -1.011500000000e-01" />
+                        <PolygonPoint value="-1.360000000000e-02, -1.147500000000e-01" />
+                        <PolygonPoint value="2.720000000000e-02, -1.079500000000e-01" />
+                        <PolygonPoint value="4.760000000000e-02, -1.011500000000e-01" />
+                        <PolygonPoint value="6.800000000000e-02, -9.435000000000e-02" />
+                        <PolygonPoint value="8.160000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="1.020000000000e-01, -6.035000000000e-02" />
+                        <PolygonPoint value="1.088000000000e-01, -3.995000000000e-02" />
+                        <PolygonPoint value="1.156000000000e-01, -5.950000000000e-03" />
+                        <PolygonPoint value="1.156000000000e-01, 2.125000000000e-02" />
+                        <PolygonPoint value="1.020000000000e-01, 3.485000000000e-02" />
+                        <PolygonPoint value="7.480000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="0.000000000000e+00, 6.885000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-8.160000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="-8.160000000000e-02, 3.485000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="6.296296296296e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-8.160000000000e-02, 2.125000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="-6.800000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, -1.079500000000e-01" />
+                        <PolygonPoint value="-6.800000000000e-03, -1.079500000000e-01" />
+                        <PolygonPoint value="2.720000000000e-02, -1.079500000000e-01" />
+                        <PolygonPoint value="5.440000000000e-02, -8.755000000000e-02" />
+                        <PolygonPoint value="7.480000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="1.020000000000e-01, -4.675000000000e-02" />
+                        <PolygonPoint value="1.088000000000e-01, -1.275000000000e-02" />
+                        <PolygonPoint value="1.088000000000e-01, 1.445000000000e-02" />
+                        <PolygonPoint value="8.840000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-03, 6.885000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-8.160000000000e-02, 5.525000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="7.037037037037e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-7.480000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="-6.800000000000e-02, -2.635000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -5.355000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, -9.435000000000e-02" />
+                        <PolygonPoint value="1.360000000000e-02, -9.435000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, -8.075000000000e-02" />
+                        <PolygonPoint value="6.120000000000e-02, -6.715000000000e-02" />
+                        <PolygonPoint value="8.160000000000e-02, -4.675000000000e-02" />
+                        <PolygonPoint value="9.520000000000e-02, -1.955000000000e-02" />
+                        <PolygonPoint value="1.020000000000e-01, 8.500000000000e-04" />
+                        <PolygonPoint value="9.520000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="8.160000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="3.400000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="0.000000000000e+00, 6.885000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 7.650000000000e-03" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="7.777777777778e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-7.480000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, -6.035000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, -6.715000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-03, -6.715000000000e-02" />
+                        <PolygonPoint value="2.040000000000e-02, -6.035000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, -5.355000000000e-02" />
+                        <PolygonPoint value="6.120000000000e-02, -3.315000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="7.480000000000e-02, 7.650000000000e-03" />
+                        <PolygonPoint value="8.160000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="6.120000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="3.400000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="0.000000000000e+00, 7.565000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, 7.565000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.885000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="8.148148148148e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-8.160000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 2.125000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, 7.650000000000e-03" />
+                        <PolygonPoint value="-6.800000000000e-02, -1.955000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, -5.355000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, -6.035000000000e-02" />
+                        <PolygonPoint value="-2.040000000000e-02, -6.035000000000e-02" />
+                        <PolygonPoint value="0.000000000000e+00, -5.355000000000e-02" />
+                        <PolygonPoint value="2.040000000000e-02, -4.675000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, -3.315000000000e-02" />
+                        <PolygonPoint value="4.760000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, 7.650000000000e-03" />
+                        <PolygonPoint value="6.800000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="6.120000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="4.760000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="2.040000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-03, 6.885000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-8.160000000000e-02, 4.845000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="8.518518518519e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-5.440000000000e-02, -3.315000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="-1.360000000000e-02, -3.995000000000e-02" />
+                        <PolygonPoint value="0.000000000000e+00, -3.315000000000e-02" />
+                        <PolygonPoint value="1.360000000000e-02, -1.955000000000e-02" />
+                        <PolygonPoint value="2.720000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="4.080000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="5.440000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="3.400000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-03, 6.885000000000e-02" />
+                        <PolygonPoint value="-2.040000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, 7.650000000000e-03" />
+                        <PolygonPoint value="-6.120000000000e-02, -2.635000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="8.888888888889e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-7.480000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="-6.120000000000e-02, 7.650000000000e-03" />
+                        <PolygonPoint value="-6.120000000000e-02, -5.950000000000e-03" />
+                        <PolygonPoint value="-4.760000000000e-02, -1.955000000000e-02" />
+                        <PolygonPoint value="-3.400000000000e-02, -1.275000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-03, 8.500000000000e-04" />
+                        <PolygonPoint value="1.360000000000e-02, 1.445000000000e-02" />
+                        <PolygonPoint value="3.400000000000e-02, 2.805000000000e-02" />
+                        <PolygonPoint value="4.760000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="4.080000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="2.720000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="0.000000000000e+00, 6.885000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.205000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="9.259259259259e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-6.800000000000e-02, 8.500000000000e-04" />
+                        <PolygonPoint value="-4.080000000000e-02, 8.500000000000e-04" />
+                        <PolygonPoint value="0.000000000000e+00, 1.445000000000e-02" />
+                        <PolygonPoint value="2.720000000000e-02, 5.525000000000e-02" />
+                        <PolygonPoint value="6.800000000000e-03, 6.885000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 7.565000000000e-02" />
+                        <PolygonPoint value="-1.088000000000e-01, 7.565000000000e-02" />
+                        <PolygonPoint value="-1.088000000000e-01, 5.525000000000e-02" />
+                        <PolygonPoint value="-8.160000000000e-02, 7.650000000000e-03" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="9.629629629630e-01">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-6.800000000000e-02, 3.485000000000e-02" />
+                        <PolygonPoint value="-5.440000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-4.080000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-2.720000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-1.360000000000e-02, 4.845000000000e-02" />
+                        <PolygonPoint value="-2.040000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-4.760000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-8.840000000000e-02, 7.565000000000e-02" />
+                        <PolygonPoint value="-1.020000000000e-01, 7.565000000000e-02" />
+                        <PolygonPoint value="-9.520000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-8.840000000000e-02, 4.165000000000e-02" />
+                        <PolygonPoint value="-8.160000000000e-02, 3.485000000000e-02" />
+                    </Section>
+                </PositionSection>
+                <PositionSection t="1.000000000000e+00">
+                    <Section type="CSectionPolygon">
+                        <SectionMesh type="CSectionMeshRectangular" NumLayers="-1" TriangleCorners="1" />
+                        <PolygonPoint value="-1.088000000000e-01, 6.885000000000e-02" />
+                        <PolygonPoint value="-1.020000000000e-01, 6.205000000000e-02" />
+                        <PolygonPoint value="-9.520000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-8.160000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-6.800000000000e-02, 6.205000000000e-02" />
+                        <PolygonPoint value="-7.480000000000e-02, 6.885000000000e-02" />
+                        <PolygonPoint value="-9.520000000000e-02, 7.565000000000e-02" />
+                        <PolygonPoint value="-1.088000000000e-01, 7.565000000000e-02" />
+                    </Section>
+                </PositionSection>
+            </YarnSection>
+            <FibreDistribution type="CFibreDistributionConst" />
+            <MasterNode index="0" Position="3.658400000000e+00, 1.815600000000e+00, -4.292500000000e-01" Tangent="0.000000000000e+00, 1.000000000000e+00, 0.000000000000e+00" Up="0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00" Angle="0.000000000000e+00" />
+            <MasterNode index="1" Position="3.658400000000e+00, 1.999200000000e+00, -4.292500000000e-01" Tangent="0.000000000000e+00, 1.000000000000e+00, 0.000000000000e+00" Up="0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00" Angle="0.000000000000e+00" />
+        </Yarn>
+    </Textile>
+</TexGenModel>
