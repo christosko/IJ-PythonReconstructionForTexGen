@@ -1,12 +1,12 @@
 import numpy as np
-
 import math as m
 import os
 import sys
 from os import listdir
+import matplotlib.pyplot as plt
 cwd=os.getcwd()
 sys.path.append(cwd)
-#Requires a minimum build of texgen and a path pointing to Python libraris
+#Requires a minimum build of texgen and a path pointing to Python libraries
 TexGenPath='C:\\Python27\\Lib\\site-packages\\TexGen'
 sys.path.append(TexGenPath)
 
@@ -79,11 +79,653 @@ def BringToTop(Arr,Index): # If Portion = 1  : Full rotation
       Arr=np.insert(Arr,-1,Arr[0],0)
       Arr=np.delete(Arr,0,0) 
   return Arr 
+def CheckX(V):
+  Xunit=XYZ(1.0,0.0,0.0)
+  Yunit=XYZ(0.0,1.0,0.0)
+  Zunit=XYZ(0.0,0.0,1.0)
+  if GetLength(CrossProduct(Xunit,V))<GetLength(CrossProduct(Zunit,V)) and GetLength(CrossProduct(Xunit,V))<GetLength(CrossProduct(Yunit,V)):
+     return True
+  else:
+     return False
+
+def CheckY(V):
+  Xunit=XYZ(1.0,0.0,0.0)
+  Yunit=XYZ(0.0,1.0,0.0)
+  Zunit=XYZ(0.0,0.0,1.0)
+  if GetLength(CrossProduct(Yunit,V))<GetLength(CrossProduct(Zunit,V)) and GetLength(CrossProduct(Yunit,V))<GetLength(CrossProduct(Xunit,V)):
+     return True
+  else:
+     return False
+
+def CheckZ(V):
+  Xunit=XYZ(1.0,0.0,0.0)
+  Yunit=XYZ(0.0,1.0,0.0)
+  Zunit=XYZ(0.0,0.0,1.0)
+  if GetLength(CrossProduct(Zunit,V))<GetLength(CrossProduct(Xunit,V)) and GetLength(CrossProduct(Zunit,V))<GetLength(CrossProduct(Yunit,V)):
+     return True
+  else:
+     return False
+
+def GetX(V):
+   return V[0].x
+def GetY(V):
+   return V[0].y
+
+def GetCentroidsXYZ(Yarn):
+   CentVec=XYZVector()
+   SlaveNodes=Yarn.GetSlaveNodes(2)
+   for s in SlaveNodes:
+      Orig=XYZ(0.0,0.0,0.0)
+      secpts=s.GetSectionPoints()
+      for p in secpts:
+         Orig=Orig+p
+      Orig=Orig*float(1.0/float(len(secpts)))
+      CentVec.push_back(Orig)
+   return CentVec   
+
+def YarnTypeSort(Textile):
+   Yarns=Textile.GetYarns()
+   X=[]
+   Y=[]
+   Z=[]
+   # Sort yarns ###################
+   for i,Yarn in enumerate(Yarns):
+      M0P=Yarn.GetNode(0).GetPosition()
+      M1P=Yarn.GetNode(1).GetPosition()
+      V=M1P-M0P
+      M2=Yarn.GetNode(2)
+      if M2:
+         print 'Binder: '+str(i)
+         Z.append(Yarn)
+      elif CheckX(V):
+         print 'Warp: '+str(i)
+         X.append(Yarn)
+      elif CheckY(V):  
+         print 'Weft: '+str(i)
+         Y.append(Yarn)
+   return X,Y,Z
+
+def GetCentroidsXYZList(YarnList):
+   X=[]
+   Y=[]
+   Z=[]
+   for yarn in YarnList:
+      Cents=GetCentroidsXYZ(yarn)
+      for c in Cents:
+         X.append(c.x)
+         Y.append(c.y)  
+         Z.append(c.z)    
+   return X,Y,Z 
+
+def SortInPlane(YarnSet,Axis,NumInPlane):
+   YarnCent=[GetCentroidsXYZ(y) for y in YarnSet]
+   YarnHash=[True for y in YarnSet]
+   SortedSet=[]
+   for i,wa in enumerate(YarnSet[:-1]):
+       Layer=[]
+       LayerFull=[None for k in NumInPlane]       
+       PosList=[]
+       if YarnHash[i]:
+         YarnHash[i]=False 
+         Layer.append(YarnCent[i])
+         m0=wa.GetNode(0).GetPosition() 
+         for j,wa1 in enumerate(YarnSet[i+1:]):
+            if YarnHash[j]:
+              m1=wa1.GetNode(0).GetPosition()
+              V=m1-m0 
+              if Axis in ['X','x']:
+                 dirbool=CheckX(V)
+              elif Axis in ['Y','y']:
+                 dirbool=CheckY(V)
+              else:
+                 print 'Axis must be either X or Y\n'
+                 return 0                          
+              if dirbool:
+                 Layer.append(YarnCent[j])
+                 YarnHash[j]=False
+                 PosList.append(j)                 
+         if Axis in ['X','x']:        
+            Layer=sorted(Layer, key=GetX)
+         elif Axis in ['Y','y']:
+            Layer=sorted(Layer, key=GetY)
+         else:
+            print 'Axis must be either X or Y\n'
+            return 0     
+         
+         for ind,i in enumerate(PosList):
+            try:
+               LayerFull[i]=Layer[ind] 
+            except IndexError:
+               print 'Reached in plane yarn limit!'
+               pass
+         SortedSet.append(LayerFull)     
+   return SortedSet
+
+def Find2DIntersection(Yarn1, Yarn2, window):
+   mindist=1e5
+   for i,slave in enumerate(Yarn1):
+       ind=GetClosestPointIndex(Yarn2,slave)
+       nearpoint=Yarn2[ind]
+       length=GetLength(slave,nearpoint)
+       if length<mindist:
+          mindist=length
+          minind1=i
+          minind2=ind
+   lim1=len(Yarn1)-1
+   lim2=len(Yarn2)-1      
+   X1,Y1,Z1=GetCentroidsXYZList(Yarn1)
+   X2,Y2,Z2=GetCentroidsXYZList(Yarn2)
+
+   start1=abs(minind1-window)
+   if minind1+window<=lim1:
+      end1=minind1+window
+   else:
+      end1=lim1
+
+   start2=abs(minind2-window)
+   if minind2+window<=lim2:
+      end2=minind2+window
+   else:
+      end2=lim2
+
+   k1,m1=np.polyfit(np.array(X1[start1]),np.array(end1),1)       
+   k2,m2=np.polyfit(np.array(X2[start2]),np.array(end2),1)
+
+   x10=X1[start1]
+   x11=X1[end1]
+   dx1=x11-x10
+   p11=XY(x10,k1*x10+m1)
+   p12=XY(x11,k1*x11+m1)
+
+   x20=X2[start2]
+   x21=X2[end2]
+   dx2=x21-x20
+   p21=XY(x20,k2*x20+m2)
+   p22=XY(x21,k2*x21+m2)
+   
+   dU1=0.0
+   dU2=0.0
+   LineLineIntersect2D(p11,p12,p21,p22,dU1,dU2)
+   Point=XY(x10+dU1*dx1,k1*(x10+dU1*dx1)+m1)
+   return Point
+
+def BuildControlMesh(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
+   # Control points are defined a set of points which characterise the architecture pattern distortion
+   # The points are supposed to be spaced irregularly because the geometry is distortded
+   # By connecting the control point to form a brick mesh of the domain, each element contains
+   # a set of points from the point cloud of the measured geometry . 
+   # If we assusme that we can "regularise" the grid of points(mesh) by averaging the distances we can
+   # come up with an orthogonal brick mesh referring to the corrected geometry 
+   # If we assume the same element-wise affine transformations required to get to the regular grid from the 
+   # irregular can be applied for the respective point set, a reverse process based on brick element shape functions
+   # can be defined. 
+   X,Y,Z=YarnTypeSort(Textile)
+   XCent=[GetCentroidsXYZ(y) for y in X]
+   YCent=[GetCentroidsXYZ(y) for y in Y]
+
+   XHash=[True for y in X]
+   YHash=[True for y in Y]
+
+   XSort=[]
+   YSort=[]
+
+   
+   TopWeft=[]
+   BottomWeft=[]
+   UpperInnerWeft=[]
+   LowerInnerWeft=[]
+   MidWeft=[]
+   UpperWarp=[]
+   LowerWarp=[]
+   UpperBinder=[]
+   LowerBinder=[]
+
+   #Replace with the sorting function
+
+   for i,wa in enumerate(X[:-1]):
+       Layer=[]
+       if XHash[i]:
+         XHash[i]=False 
+         Layer.append(XCent[i])
+         m0=wa.GetNode(0).GetPosition() 
+         for j,wa1 in enumerate(X[i+1:]):
+            if XHash[j]:
+              m1=wa1.GetNode(0).GetPosition()
+              V=m1-m0       
+              if CheckY(V):
+                 Layer.append(XCent[j])
+                 XHash[j]=False
+         Layer=sorted(Layer, key=GetY)         
+         XSort.append(Layer)  
+   
+   for i,wa in enumerate(Y[:-1]):
+       Layer=[]
+       if YHash[i]:
+         YHash[i]=False 
+         Layer.append(YCent[i])
+         m0=wa.GetNode(0).GetPosition() 
+         for j,wa1 in enumerate(Y[i+1:]):
+            if YHash[j]:
+              m1=wa1.GetNode(0).GetPosition()
+              V=m1-m0       
+              if CheckX(V):
+                 Layer.append(YCent[j])
+                 YHash[j]=False
+         Layer=sorted(Layer, key=GetX)        
+         YSort.append(Layer)  
+   TopWeft=YSort[0]
+   BottomWeft=YSort[-1]
+   numtopweft=len(TopWeft)      
+   NumWeftLay=len(YSort)
+   MidWeft=YSort[NumWeftLay//2]
+   NumWarpLay=len(XSort)
+   UpperMidWarp=XSort[NumWarpLay//2]
+   LowerMidWarp=XSort[NumWarpLay//2+1]
+   
+   middz=MidWeft[0].GetPosition(0).z
+   for yarn in Z:
+      if yarn.GetNode(1).GetPosition().z>middz:
+         UpperBinder.append(yarn)
+      else:
+         LowerBinder.append(yarn)
+   UpperBinderHash=[True for y in UpperBinder]
+   UpperBinderSort=[]
+   UpperBinderCent=[GetCentroidsXYZ(y) for y in UpperBinder]
+   for i,yarn in enumerate(UpperBinder[:-1]):
+       LayerFull=[None for k in numtopweft]
+       Layer=[]
+       poslist=[]
+       if UpperBinderHash[i]:
+         UpperBinderHash[i]=False 
+         Layer.append(UpperBinderCent[i])
+         m0=wa.GetNode(1).GetPosition() 
+         for j,wa1 in enumerate(UpperBinder[i+1:]):
+            if UpperBinderHash[j]:
+               m1=wa1.GetNode(1).GetPosition()
+               V=m1-m0       
+               if CheckX(V):
+                  Layer.append(UpperBinderCent[j])
+                  poslist.append(j)
+                  UpperBinderHash[j]=False
+         Layer=sorted(Layer, key=GetX)   
+         for ind,i in enumerate(poslist):
+             LayerFull[i]=Layer[ind] 
+         UpperBinderSort.append(LayerFull)    
+   #Top leftmost binder is UpperBinderSort[0][0]
+   TopNodePattern=[None for i in numtopweft for j in UpperBinderSort]
+   for i,yarn in enumerate(TopWeft):
+      for j,yarn in enumerate(UpperBinderSort):
+
+      
+
+
+   # Find a way to identify cross over points and yarn section in vicinity
+   ControlMesh=XYZVector()
+   return ControlMesh
+
+
+
+def PlotScatterProj2D(X,Y,Htitle,Vtitle,Title):
+   fig1, ax1=plt.subplots()
+   ax1.set_xlabel(Htitle,fontsize=14)
+   ax1.set_ylabel(Vtitle,fontsize=14)
+   ax1.set_title(Title,fontsize=14)
+
+   ax1.scatter(X,Y, label='Centroid Data')
+   #k,m=np.polyfit(np.array(X),np.array(Y),1)
+   #ax1.plot(np.array(X),np.array(X)*k+m,color='red', label='Fitted Line')
+   #k,m=np.polyfit(np.array(X),np.array(Y),1)
+   #ax1.plot(np.array(X),np.array(X)*k+m,color='red')
+   ax1.legend(fontsize=14)   
+   plt.show()
+   return 0
+
+def PlotProjectedCentroids(Textile):
+   Warp, Weft, Binder = YarnTypeSort(Textile)
+   #warp
+   del Warp[-1] # Incomplete yarns
+   del Warp[-1] 
+   WarpLeft=[wa for wa in Warp if wa.GetNode(0).GetPosition().y<3.0]
+   WarpRight=[wa for wa in Warp if wa.GetNode(0).GetPosition().y>3.0]
+   #X,Y,Z=GetCentroidsXYList(Warp)  
+   fig1, ax1=plt.subplots()
+   ax1.set_xlabel('Y',fontsize=14)
+   ax1.set_ylabel('Z',fontsize=14)
+   ax1.set_title("Warp Projection",fontsize=14)
+
+   XL,YL,ZL=GetCentroidsXYZList(WarpLeft)
+   XR,YR,ZR=GetCentroidsXYZList(WarpRight)
+   ax1.scatter(YL+YR,ZL+ZR, label='Centroid Data')
+   k,m=np.polyfit(np.array(YL),np.array(ZL),1)
+   ax1.plot(np.array(YL),np.array(YL)*k+m,color='red', label='Fitted Line')
+   k,m=np.polyfit(np.array(YR),np.array(ZR),1)
+   ax1.plot(np.array(YR),np.array(YR)*k+m,color='red')
+   ax1.legend(fontsize=14)
+   #Weft
+   FullWeft=[we for we in Weft if we.GetNode(0).GetPosition().x > 3.5 and we.GetNode(0).GetPosition().x < 7.3 ]
+   WeftLeft=[we for we in FullWeft if we.GetNode(0).GetPosition().x<5.0]
+   WeftRight=[we for we in FullWeft if we.GetNode(0).GetPosition().x>5.0]   
+   XL,YL,ZL=GetCentroidsXYZList(WeftLeft)
+   XR,YR,ZR=GetCentroidsXYZList(WeftRight)
+   fig2, ax2=plt.subplots()
+   ax2.set_xlabel('X',fontsize=14)
+   ax2.set_ylabel('Z',fontsize=14)
+   ax2.set_title("Weft Projection",fontsize=14)
+   ax2.scatter(XL+XR,ZL+ZR, label='Centroid Data')
+   k,m=np.polyfit(np.array(XL),np.array(ZL),1)
+   ax2.plot(np.array(XL),np.array(XL)*k+m,color='red', label='Fitted Line')
+   k,m=np.polyfit(np.array(XR),np.array(ZR),1)
+   ax2.plot(np.array(XR),np.array(XR)*k+m,color='red')
+   ax2.legend(fontsize=14)
+   plt.show()
+   
+   X,Y,Z=GetCentroidsXYZList(Warp+Weft+Binder)
+   PlotScatterProj2D(X,Y,'X','Y','XY Projection')
+   return 0
+
+
+
+
+#def GetAverageXYTranslations(Warp,Weft,Binder): # Under construction 
+#
+#    ### Compute average translation vectors ################   
+#    ##  translation vector in Y axis:  
+#    dysum=0
+#    Bnum=0
+#    DomainY0=0
+#    DomainY0count=0
+#    for i,b in enumerate(Binder[:-1]):
+#       m0=b.GetNode(2).GetPosition()
+#       mindist=100.0
+#       DVecs=XYZVector()
+#       for b1 in Binder[i+1:]:
+#          m1=b1.GetNode(2).GetPosition()
+#          V=m1-m0    
+#          if CheckY(V):
+#            DVecs.push_back(V)
+#            if abs(V.y)<=mindist:
+#               mindist=abs(V.y)
+#       for v in DVecs:
+#          if v.y <= 1.2*mindist:
+#            dysum+=mindist
+#            Bnum+=1
+#    Wanum=0
+#    for i,wa in enumerate(Warp[:-1]):
+#       m0=wa.GetNode(0).GetPosition()
+#       mindist=100.0
+#       for wa1 in Warp[i+1:]:
+#          m1=wa1.GetNode(0).GetPosition()
+#          V=m1-m0       
+#          if CheckY(V):
+#             DomainY0+=m0.y## To be updated
+#             DomainY0count+=1 
+#          if CheckY(V) and abs(V.y)<=mindist:
+#             mindist=abs(V.y)
+#       if mindist<100.0:       
+#          dysum+=mindist
+#          Wanum+=1
+#
+#    dymean=dysum/(Bnum+Wanum)
+#    print(dymean)    
+#    D0Ymean=DomainY0/DomainY0count
+#
+#    TVy=XYZ(0.0,2*dymean,0.0)
+#    #############
+#    ## Translation vector in X axis ### 
+#    WeftO=tuple(Weft)
+#
+#    del Weft[3]#This is a split yarn - not an accurate centroid
+#    dxsum=0
+#    Wenum=0
+#    for i,we in enumerate(Weft[:-1]):
+#       m0=we.GetNode(0).GetPosition()
+#       mindist=100.0
+#       for we1 in Weft[i+1:]:
+#          m1=we1.GetNode(0).GetPosition()
+#          V=m1-m0        
+#          if CheckX(V) and abs(V.x)<=mindist:
+#             mindist=abs(V.x)
+#       dxsum+=mindist
+#       Wenum+=1
+#
+#    dxmean=dxsum/Wenum
+#    print(dxmean)    
+#    
+#    TVx=XYZ(2*dxmean,0.0,0.0)
+#    return Tx,Ty 
+
+def Extend(Textile,ODomain):
+ 
+    Yarns=Textile.GetYarns()
+    Warp, Weft, Binder = YarnTypeSort(Textile)
+    D0Y=0
+    D0Ycount=0
+
+    OWarp=tuple(Warp)      
+    del Warp[-1]
+    del Warp[-1]      
+    ########################
+    ### Compute average translation vectors ################   
+    ##  translation vector in Y axis:  
+    dysum=0
+    Bnum=0
+    for i,b in enumerate(Binder[:-1]):
+       m0=b.GetNode(2).GetPosition()
+       mindist=100.0
+       for b1 in Binder[i+1:]:
+          m1=b1.GetNode(2).GetPosition()
+          V=m1-m0        
+          if CheckY(V) and abs(V.y)<=mindist:
+             mindist=abs(V.y)
+       if mindist<100.0:       
+          dysum+=mindist
+          Bnum+=1
+
+    Wanum=0
+    for i,wa in enumerate(Warp[:-1]):
+       m0=wa.GetNode(0).GetPosition()
+       mindist=100.0
+       for wa1 in Warp[i+1:]:
+          m1=wa1.GetNode(0).GetPosition()
+          V=m1-m0       
+          if V.y>0:
+             D0Y+=m0.y## To be updated
+             D0Ycount+=1 
+          if CheckY(V) and abs(V.y)<=mindist:
+             mindist=abs(V.y)
+       if mindist<100.0:       
+          dysum+=mindist
+          Wanum+=1
+
+    dymean=dysum/(Bnum+Wanum)
+    print(dymean)    
+    D0Ymean=D0Y/D0Ycount
+
+    TVy=XYZ(0.0,2*dymean,0.0)
+    #############
+    ## Translation vector in X axis ### 
+    WeftO=tuple(Weft)
+
+    del Weft[3]#This is a split yarn - not an accurate centroid
+    dxsum=0
+    Wenum=0
+    for i,we in enumerate(Weft[:-1]):
+       m0=we.GetNode(0).GetPosition()
+       mindist=100.0
+       for we1 in Weft[i+1:]:
+          m1=we1.GetNode(0).GetPosition()
+          V=m1-m0        
+          if CheckX(V) and abs(V.x)<=mindist:
+             mindist=abs(V.x)
+       dxsum+=mindist
+       Wenum+=1
+
+    dxmean=dxsum/Wenum
+    print(dxmean)    
+    
+    TVx=XYZ(2*dxmean,0.0,0.0)
+    #########################
+    NewTextile=CTextile()
+    Interpolation=CInterpolationBezier(False, False, False)     
+    #### Extend Weft yarns ## 
+    tolerance=1.0e-1
+    for y in WeftO:    
+       
+       NewWeft=CYarn()
+       NewYarnSection=CYarnSectionInterpPosition()
+       backmaster=y.GetNode(0)
+       SlaveNodes=list(y.GetSlaveNodes(2))
+       SVector=XYZVector()
+       SPosList=[]
+       SecPtsList=[]
+       for s in SlaveNodes:
+          SPosList.append(s.GetPosition())
+          SecPtsList.append(s.Get2DSectionPoints())
+          SVector.push_back(s.GetPosition())
+       num=len(SlaveNodes)
+       LastSlave=SlaveNodes[-1]
+       BackSlavePos=LastSlave.GetPosition()-TVy
+       backInd=GetClosestPointIndex(SVector,BackSlavePos)
+
+       if backInd>0:
+          for j in range(int(num*0.5)):
+            ##Take the next slave node in the list in order to copy the cross-section beyord the current lenght
+            
+            backnext=SlaveNodes[backInd+j+1]
+            #print backnext.GetIndex()
+            newfrontpos=backnext.GetPosition()+TVy
+            newfrontSecPts=backnext.Get2DSectionPoints()
+            SPosList.append(newfrontpos)
+            SecPtsList.append(newfrontSecPts)
+
+         # New lead master node
+       LastPos=SPosList[-1]
+       newlen=(LastPos-backmaster.GetPosition()).y
+       for i,pos in enumerate(SPosList):
+         Dv=pos-backmaster.GetPosition()
+         l=abs(Dv.y/newlen)
+         NewYarnSection.AddSection(l,CSectionPolygon(SecPtsList[i]))
+       NewWeft.AssignSection(NewYarnSection)
+       NewWeft.AddNode(backmaster)
+       NewWeft.AddNode(CNode(LastPos))
+       NewWeft.AssignInterpolation(Interpolation)
+       NewWeft.SetResolution(int(len(SPosList)-1),100) 
+       NewTextile.AddYarn(NewWeft)
+    for y in OWarp:
+       NewTextile.AddYarn(y)
+    for y in Binder:
+       NewTextile.AddYarn(y)
+
+    D0X=(Weft[1].GetNode(0).GetPosition()).x 
+    CP1=XYZ(D0X,D0Ymean,0.0)
+    OD0=XYZ()
+    OD1=XYZ()
+    out=ODomain.GetBoxLimits(OD0,OD1)
+    CP2=CP1+TVy+TVx+XYZ(0.0,0.0,OD1.z)
+    CDomain=CDomainPlanes(CP1,CP2)
+    NewTextile.AssignDomain(CDomain)
+    return NewTextile,CDomain
+
+def InterpolateSections(SecPoints0,SecPoints1,coeff):
+  InterSecPoints=XYVector()
+  for p0 in SecPoints0:
+    p1=GetClosestPoint(SecPoints1,p0)
+    pI=p0*coeff+p1*(1-coeff)
+    InterSecPoints.push_back(pI)
+  return InterSecPoints
+
+def EnforcePeriodicity(Textile,Domain):
+    Yarns=Textile.GetYarns()
+    Warp, Weft, Binder = YarnTypeSort(Textile)
+    D0Y=0
+    D0Ycount=0
+    RepVX=XYZVector()
+    RepVY=XYZVector()
+
+    OWarp=tuple(Warp)         
+    OD0=XYZ()
+    OD1=XYZ()
+    out=Domain.GetBoxLimits(OD0,OD1)
+    
+    NewTextile=CTextile()
+    Interpolation=CInterpolationBezier(False, False, False)     
+    #### Extend Weft yarns ## 
+    tolerance=1.0e-1
+    for y in Warp+Weft:
+      backmaster=y.GetNode(0)
+      frontmaster=y.GetNode(1)
+      NewYarn=CYarn()
+      NewYarnSection=CYarnSectionInterpPosition()
+      SlaveNodes=list(y.GetSlaveNodes(2))
+      SVector=XYZVector()
+      SPosList=[]
+      SecPtsList=[]
+      NewSecPtsList=[]
+      for s in SlaveNodes:
+         SPosList.append(s.GetPosition())
+         SecPtsList.append(s.Get2DSectionPoints())
+         SVector.push_back(s.GetPosition())
+      NewSecPtsList=SecPtsList       
+      S0ind=GetClosestPointIndex(SVector,OD0)
+      S1ind=GetClosestPointIndex(SVector,OD1)
+      DNum=S1ind-S0ind
+      Steps=DNum//2
+      coeff=0.5
+      i=0
+      while coeff<=1.0 and i<=Steps:
+
+         NewSecPtsList[S0ind+i]=InterpolateSections(SecPtsList[S0ind+i],SecPtsList[S1ind-i],coeff)     
+         NewSecPtsList[S1ind-i]=InterpolateSections(SecPtsList[S1ind-i],SecPtsList[S0ind+i],coeff)
+         i+=1
+         coeff+=1.0
+
+      LastPos=SPosList[-1]
+      newlen=GetLength(LastPos,backmaster.GetPosition())
+      for i,pos in enumerate(SPosList):
+         Dl=GetLength(pos,backmaster.GetPosition())
+         l=abs(Dl/newlen)
+         NewYarnSection.AddSection(l,CSectionPolygon(NewSecPtsList[i]))
+
+      NewYarn.AssignSection(NewYarnSection)
+      NewYarn.AddNode(backmaster)
+      NewYarn.AddNode(frontmaster)
+      NewYarn.AssignInterpolation(Interpolation)
+      NewYarn.SetResolution(int(len(SPosList)-1)*3,100) 
+      NewTextile.AddYarn(NewYarn)   
+    for y in Binder:
+      NewTextile.AddYarn(y)
+    NewTextile.AssignDomain(Domain)
+    return NewTextile
+
+#def AffineTransformation(Textile,TransMat): # Under construction
+#   NewTextile=Textile()
+#   OldYarns=Textile.GetYarns()
+#   for y in OldYarns:
+#      NewYarn=CYarn()
+#      NewYarnSection=CYarnSectionInterpPosition()
+#      SlaveNodes=list(y.GetSlaveNodes(2))
+#      SVector=XYZVector()
+#      SPosList=[]
+#      SecPtsList=[]
+#      NewSecPtsList=[]
+#      for s in SlaveNodes:
+#         SPosList.append(s.GetPosition())
+#         SecPts3D = s.GetSectionPoints()
+#
+#         SecPtsList.append(s.Get2DSectionPoints())
+#         SVector.push_back(s.GetPosition()) 
+#  
+#   return NewTextile
+
+def Assign8thDomain(Textile): #under construction
+   
+   return Textile
 
 class Yarns: # This class, after initialisation, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
 
    def __init__(self,Index):
       self.Index=Index
+      self.Type=None
       self.Sections={} #Each yarn has a section list assigned to it. 
       self.Nodes=MasterNode(0,None,None,None,None) # Empty node class
       self.Length=0
@@ -148,22 +790,26 @@ class Yarns: # This class, after initialisation, takes sections using InsertSect
          m0y=np.sum(MinS.Polygon[:,1])/len(MinS.Polygon[:,1])
          m1x=np.sum(MaxS.Polygon[:,0])/len(MaxS.Polygon[:,0])
          m1y=np.sum(MaxS.Polygon[:,1])/len(MaxS.Polygon[:,1])
-     
+         mx=(m0x+m1x)/2
+         my=(m0y+m1y)/2
          if self.Sections[S].Direction in ['X','x']:
-            m0=np.array([MinS.Slice,m1x,m1y])
-            m1=np.array([MaxS.Slice,m1x,m1y])
+            self.Type='Warp'
+            m0=np.array([MinS.Slice,mx,my])
+            m1=np.array([MaxS.Slice,mx,my])
             t=np.array([1.0,0.0,0.0])
             up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)    
          elif self.Sections[S].Direction in ['Y','y']:
-            m0=np.array([m0x,MinS.Slice,m0y])
-            m1=np.array([m0x,MaxS.Slice,m0y])
+            self.Type='Weft'
+            m0=np.array([mx,MinS.Slice,my])
+            m1=np.array([mx,MaxS.Slice,my])
             t=np.array([0.0,1.0,0.0])
             up=np.array([0.0,0.0,1.0])
             M0=MasterNode(0,m0,0.0,t,up)
             M1=MasterNode(1,m1,0.0,t,up)
          elif self.Sections[S].Direction in ['Z','z']:
+            self.Type='Binder'
             if self.Sections[S].Sign:
                if S<0:
                  x=m1x
@@ -183,13 +829,15 @@ class Yarns: # This class, after initialisation, takes sections using InsertSect
                  y=m1y
                else:
                  x=m0x
-                 y=m0y                
+                 y=m0y 
+                               
                m0=np.array([x,y,DS[2]-MinS.Slice])
                m1=np.array([x,y,DS[2]-MaxS.Slice])              
                t=np.array([0.0,0.0,-1.0])              
                up=np.array([0.0,-1.0,0.0])              
                M1=MasterNode(0,m1,0.0,t,up)
-               M0=MasterNode(1,m0,0.0,t,up)                                 
+               M0=MasterNode(1,m0,0.0,t,up)    
+                                         
          else :
             print 'No direction specified for Section:'+str(self.Sections[S].Index)  
          # Rotates polygon point order to match the previous polygon -  not great
@@ -214,7 +862,7 @@ class Yarns: # This class, after initialisation, takes sections using InsertSect
       if len(self.Sections)>1:
          PreLength=0 
          for i in range(len(self.Sections)):
-           print(NodeList[2*i].Index,NodeList[2*i+1].Index)
+           #print(NodeList[2*i].Index,NodeList[2*i+1].Index)
            SecLength=NodeDistance(NodeList[2*i],NodeList[2*i+1])
            self.Sections[SecInd[i]].UpdateGlobalPositions(self.Length,PreLength,SecLength)
            try:
@@ -249,7 +897,7 @@ class Yarns: # This class, after initialisation, takes sections using InsertSect
 
    def ExtractYarns(self,EmptyDict={}):
      if self.left:
-       self.left.ExtractYarns(EmptyDict)
+       self.left.ExtractYarns(EmptyDict) 
      EmptyDict[self.Index]=self  
      if self.right:
        self.right.ExtractYarns(EmptyDict)    
@@ -269,7 +917,6 @@ class Yarns: # This class, after initialisation, takes sections using InsertSect
      return Count
  
        
-
 class Section: #Data binary tree for signle direction section sequence - recursive method
 
   def __init__(self,Index,Slice,Polygon,Direction,Sign):
@@ -384,7 +1031,6 @@ class Section: #Data binary tree for signle direction section sequence - recursi
        self.right.PrintTree()  
 
 
-
 class MasterNode:
 
   def __init__(self,Index,Position,Angle,Tangent,Up):
@@ -490,16 +1136,16 @@ if __name__=='__main__':
   CP1=XYZ(P0[0],P0[1],P0[2])
   CDomain=CDomainPlanes(CP1,CP2) # TexGen domain class
   #Polygon Data folder:
-  DatFold='\\Data7'
+  DatFold='\\Data8'
   os.chdir(cwd+DatFold)
   # Store Files:
   FileList=[(f.replace('.dat','')).split('_') for f in listdir(cwd+DatFold)] # list of info from names
-  FileNames=[f.replace('.dat','.dat') for f in listdir(cwd+DatFold)] # full names
+  FileNames=[f for f in listdir(cwd+DatFold)] # full names
   # Initialise auxiliary class: 
   MyYarns=Yarns(0)
   i=0
   for file in FileList:
-    # File name structure : Direction_YarnIndex_Index_Slice ex. : X_2_1_230
+    # File name structure : Direction_YarnIndex_Index_Slice ex. : X_2_1_230 + _-1 depending on the partition sequence. 
     Direction=file[0]
     YarnIndex=int(file[1])
     Index=int(file[2])
@@ -529,50 +1175,6 @@ if __name__=='__main__':
   
   MyYarns.AddMasterNodes()
   
-  ####Correct master nodes for binder yarns: 
-  #correct_masternodes=True
-  #if correct_masternodes : 
-  #  new_master_co=np.genfromtxt(cwd+'\\master_nodes_33.dat')
-  #  
-  #  tang=np.array([[1.0,0.0,0.0],
-  #    [1.0,0.0,0.0],
-  #    [0.0,0.0,-1.0],
-  #    [0.0,0.0,-1.0],
-  #    [1.0,0.0,0.0],
-  #    [1.0,0.0,0.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,0.0,1.0],
-  #    [1.0,0.0,0.0],
-  #    [1.0,0.0,0.0],
-  #    [0.0,0.0,-1.0],
-  #    [0.0,0.0,-1.0],
-  #    [1.0,0.0,0.0],
-  #    [1.0,0.0,0.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,0.0,1.0],
-  #    [1.0,0.0,0.0],
-  #    [1.0,0.0,0.0]])
-  #  upv=np.array([[0.0,0.0,1.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,-1.0,0.0],
-  #    [0.0,-1.0,0.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,-1.0,0.0],
-  #    [0.0,-1.0,0.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,-1.0,0.0],
-  #    [0.0,-1.0,0.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,-1.0,0.0],
-  #    [0.0,-1.0,0.0],
-  #    [0.0,0.0,1.0],
-  #    [0.0,0.0,1.0]])
-
-  #########      
-
   #######
   # TexGen classes initialisation: 
   Textile=CTextile()
@@ -580,19 +1182,36 @@ if __name__=='__main__':
   
   #Traverse auxiliary yarn tree and extract yarns
   MyYarnDict=MyYarns.ExtractYarns()
-  
-  #StartAngleX=m.radians(180)
-  #StartAngleZ=m.radians(0)
-
+  #Indices used for binder yarns need to be included in a list
+  #This helps with identifying and applying the appropriate resolution 
+  BinderIndexList=[]#Initialised and populated with yarns with number of partitions>1
 
   # Iterate yarn class to extact data and populate corresponding TexGen classes
   for y in MyYarnDict:
     MyYarn=MyYarnDict[y]
     MyNodes=MyYarn.Nodes
     NodeList=MyNodes.GetList([])
+###### Just added - Add extra nodes between partition links 
+#    num=len(NodeList)
+#    if num>2:
+#      for i in range(num//2-1):
+#        N0=NodeList[3*i+1]
+#         N1=NodeList[3*i+2]
+#         dv=N1.Position-N0.Position
+#         NmidPos=N0.Position+dv*0.5
+#         tan_i=dv/np.linalg.norm(dv)
+#         up_i=np.cross(tan_i,np.array([0.0,1.0,0.0]))
+#         Nmid=MasterNode(3*i+2,NmidPos,0.0,tan_i,up_i)
+#         NodeList.insert(3*i+2,Nmid)
+############################# 
+
     n0y=NodeList[0].Position[1]
     NumSlices=MyYarn.CountSlices(0)
     MySections=MyYarn.Sections
+    BinderBool=False
+    if len(MySections)>1:
+      BinderIndexList.append(y)
+      BinderBool=True
     CSection=CYarnSectionInterpPosition()
     CNodeList=[CNode(XYZ(n.Position[0],n.Position[1],n.Position[2])) for n in NodeList]
     
@@ -610,6 +1229,10 @@ if __name__=='__main__':
         CXYVector=XYVector()
         MyPolygon=SectionsDict[s].Polygon
         N=MyNodes.Find(2*sec)
+        
+        #Append nodes for translation vector computations:
+        #if BinderBool and sec==0:
+        #   if 
 
         if Direction in ['X','x']:
           MNPos=np.array([N.Position[1],N.Position[2]])
@@ -636,6 +1259,7 @@ if __name__=='__main__':
           CXYVector.push_back(i)
         #d=SectionsDict[s].d
         CSection.AddSection(s,CSectionPolygon(CXYVector))
+
     CYarn0=CYarn()
     CYarn0.AssignSection(CSection)
     i=0
@@ -652,17 +1276,25 @@ if __name__=='__main__':
        except AttributeError:
          pass
        i+=1
+
     CYarn0.AssignInterpolation(Interpolation)
-    if y in [33,34,35,36,37,38,39,40]:
-      CYarn0.SetResolution(int(NumSlices*0.6),60)
+    # Adjusted resolution depending on yarn type. 
+    if BinderBool:
+      CYarn0.SetResolution(int(NumSlices*0.6),50)
     else:
       CYarn0.SetResolution(int(NumSlices*0.8),100) 
     Textile.AddYarn(CYarn0)
-  #Save tg3 file  
 
+  #Save tg3 file  
+  
+  #NewTex,NewDomain=Extend(Textile,CDomain)
+  #NewTex=EnforcePeriodicity(NewTex,NewDomain)
+  #NewTex.AssignDomain(CDomain)
   Textile.AssignDomain(CDomain)
-  AddTextile('Rec4',Textile)
-  SaveToXML(cwd+'\\Reconstruction4.tg3',"",OUTPUT_STANDARD)
+  #AddTextile('Rec9',NewTex)
+  AddTextile('Rec9',Textile)
+  #PlotProjectedCentroids(Textile)
+  SaveToXML(cwd+'\\Reconstruction10.tg3',"",OUTPUT_STANDARD)
 
 
     

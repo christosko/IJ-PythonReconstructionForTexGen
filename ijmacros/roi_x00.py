@@ -8,9 +8,16 @@ image = IJ.getImage()
 roi = image.getRoi()
 slic=image.getSlice()
 ### Define : 
-insert='X_40_0_' + str(slic)# + '_-1'
+insert='Z_52_1_' + str(slic)# + '_-1'
 ###
-
+upper=True
+####
+insert_break=insert.split('_')
+if insert_break[2]=='-1' and upper:
+   insert+='_-1'
+elif insert_break[2]=='1' and not upper:
+   insert+='_-1'
+   
 if roi:
     # Get ROI points
     polygon = roi.getPolygon()
@@ -18,7 +25,7 @@ if roi:
     x = polygon.xpoints
     y = polygon.ypoints
 
-    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF55\\Data7\\'
+    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF55\\Data8\\'
     fileName=insert + '.dat'
     if os.path.isdir(dirPath):
       f = open(dirPath+fileName, 'w')

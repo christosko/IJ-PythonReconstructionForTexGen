@@ -85,8 +85,8 @@ Speed0=0.5 #Initial particle speed
 Num=65 # Number of particles
 ReverseSpeedFactor=0.1# Corrective backstep speed factor (if needed) 
 Dang=(2*math.pi)/(Num-1)# Angle step
-aa=iters-200 # Activations allowed
-Dth=10.0 # Difference threshold
+aa=100 # Activations allowed
+Dth=8.0 # Difference threshold
 NodeList=[]
 
 #w0 Center Pixel window size
@@ -98,7 +98,7 @@ NodeList=[]
 
 mode='yarn'
 if mode in ['Yarn','yarn']:
-  w0,w1,R,fx,fy,n=4,4,8,3.0,0.6,0.3
+  w0,w1,R,fx,fy,n=4,4,4,3.0,0.8,0.2
 elif mode in ['Void', 'void']:
   w0,w1,R,fx,fy,n=1,1,1,1.0,1.0,1.0
 

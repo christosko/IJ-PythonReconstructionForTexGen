@@ -244,9 +244,9 @@ d=48
 w=24
 h=4
 
-xrng=range(580,900,80)
-yrng=range(320,580,60)
-zrng=range(138,139,1)
+xrng=range(660,780,10)
+yrng=range(40,90,10)
+zrng=range(536,537,1)
 
 PRoi=PointRoi()
 #PRoi.addPoint()
@@ -277,7 +277,7 @@ for i in xrng:
       z=int(k)
       if ratio>0.0:
          #print(x,y,z)               
-         print(ratio,eigvec.get(minind,0),eigvec.get(minind,1),eigvec.get(minind,2))
+        # print(ratio,eigvec.get(minind,0),eigvec.get(minind,1),eigvec.get(minind,2))
 
          PRoi.addPoint(x,y)  
          x1=float(x+eigvec.get(minind,0)*(scaling/2))

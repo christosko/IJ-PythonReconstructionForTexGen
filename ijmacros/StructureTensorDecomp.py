@@ -138,14 +138,14 @@ d=8
 w=18
 h=2
 
-xrng=range(277,667,10)
-yrng=range(120,480,40)
+xrng=range(440,580,10)
+yrng=range(100,180,10)
 PRoi=PointRoi()
 
 for i in xrng:
   for j in yrng:
      eigval,eigvec=StructureTensor(i,j,h,w,image)
-     scaling=15
+     scaling=4
      Min=20000.000
      minind=0
      for e in range(len(eigval)):
