@@ -4,6 +4,8 @@ import os
 import sys
 from os import listdir
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D 
+from sklearn.cluster import KMeans
 cwd=os.getcwd()
 sys.path.append(cwd)
 #Requires a minimum build of texgen and a path pointing to Python libraries
@@ -106,6 +108,39 @@ def CheckZ(V):
   else:
      return False
 
+def Check2DX(V):
+  Xunit=XYZ(1.0,0.0,0.0)
+  Yunit=XYZ(0.0,1.0,0.0)
+  if GetLength(CrossProduct(Xunit,V))<GetLength(CrossProduct(Yunit,V)):
+     return True
+  else:
+     return False
+
+def Check2DY(V):
+  Xunit=XYZ(1.0,0.0,0.0)
+  Yunit=XYZ(0.0,1.0,0.0)
+  if GetLength(CrossProduct(Yunit,V))<GetLength(CrossProduct(Xunit,V)):
+     return True
+  else:
+     return False
+
+def TolCheckX(V,tolerance):
+   Xunit=XYZ(1.0,0.0,0.0)
+   Zunit=XYZ(0.0,0.0,1.0)   
+   if abs(V.z)<abs(V.x)*tolerance:
+   #if GetLength(CrossProduct(Xunit,V))<GetLength(CrossProduct(Zunit,V))*tolerance:
+      return True
+   else:
+      return False   
+def TolCheckY(V,tolerance):
+   Yunit=XYZ(0.0,1.0,0.0)
+   Zunit=XYZ(0.0,0.0,1.0)   
+   if abs(V.z)<abs(V.y)*tolerance:
+   #if GetLength(CrossProduct(Yunit,V))<GetLength(CrossProduct(Zunit,V))*tolerance:
+      return True
+   else:
+      return False  
+
 def GetX(V):
    return V[0].x
 def GetY(V):
@@ -157,48 +192,63 @@ def GetCentroidsXYZList(YarnList):
          Z.append(c.z)    
    return X,Y,Z 
 
+def SegIntersect(p1,p2,p3,p4):
+   denom = (p4.y-p3.y)*(p2.x-p1.x) - (p4.x-p3.x)*(p2.y-p1.y)
+   if not denom:
+      print 'Parallel lines!\n'
+      return None,None
+   dU1 = ((p4.x-p3.x)*(p1.y-p3.y)-(p4.y-p3.y)*(p1.x-p3.x))/denom
+   dU2 = ((p2.x-p1.x)*(p1.y-p3.y)-(p2.y-p1.y)*(p1.x-p3.x))/denom
+   if dU1<0 or dU1>1 or dU2<0 or dU2>1:
+      print 'Unsuccessful!\n'
+      return None,None     
+   return dU1,dU2     
+   
 def SortInPlane(YarnSet,Axis,NumInPlane):
    YarnCent=[GetCentroidsXYZ(y) for y in YarnSet]
    YarnHash=[True for y in YarnSet]
    SortedSet=[]
    for i,wa in enumerate(YarnSet[:-1]):
-       Layer=[]
-       LayerFull=[None for k in NumInPlane]       
-       PosList=[]
+       Layer=[]     
        if YarnHash[i]:
          YarnHash[i]=False 
          Layer.append(YarnCent[i])
          m0=wa.GetNode(0).GetPosition() 
-         for j,wa1 in enumerate(YarnSet[i+1:]):
+         j=i+1
+         for wa1 in YarnSet[i+1:]:
+            dirbool=False
+            m1=wa1.GetNode(0).GetPosition()
+            V=m1-m0             
+            #print(V.z)
             if YarnHash[j]:
-              m1=wa1.GetNode(0).GetPosition()
-              V=m1-m0 
+              #print 'in:'+str(j)+'\n'
               if Axis in ['X','x']:
-                 dirbool=CheckX(V)
+                 dirbool=TolCheckX(V,0.1)
+                 #if dirbool:
+                 #print 'Weft yarn'+str(i)+'to '+str(j)+' is:z='+str(V.z)+',x='+str(V.x)+str(dirbool)+'\n'
               elif Axis in ['Y','y']:
-                 dirbool=CheckY(V)
+                 dirbool=TolCheckY(V,0.1)
+                 #if dirbool: 
+                 #print 'Warp yarn'+str(i)+'to '+str(j)+' is:z='+str(V.z)+',y='+str(V.y)+str(dirbool)+'\n'
               else:
                  print 'Axis must be either X or Y\n'
                  return 0                          
               if dirbool:
                  Layer.append(YarnCent[j])
-                 YarnHash[j]=False
-                 PosList.append(j)                 
+                 YarnHash[j]=False  
+            else:
+               pass     
+            j+=1                             
          if Axis in ['X','x']:        
-            Layer=sorted(Layer, key=GetX)
+            Layer=sorted(Layer, key=GetX)   
          elif Axis in ['Y','y']:
             Layer=sorted(Layer, key=GetY)
          else:
             print 'Axis must be either X or Y\n'
-            return 0     
-         
-         for ind,i in enumerate(PosList):
-            try:
-               LayerFull[i]=Layer[ind] 
-            except IndexError:
-               print 'Reached in plane yarn limit!'
-               pass
-         SortedSet.append(LayerFull)     
+            return 0              
+         SortedSet.append(Layer[:NumInPlane])    
+         print([yarn[0].x for yarn in Layer[:NumInPlane]])
+         #print([yarn[0].x for yarn in Layer]) 
    return SortedSet
 
 def Find2DIntersection(Yarn1, Yarn2, window):
@@ -212,24 +262,33 @@ def Find2DIntersection(Yarn1, Yarn2, window):
           minind1=i
           minind2=ind
    lim1=len(Yarn1)-1
-   lim2=len(Yarn2)-1      
-   X1,Y1,Z1=GetCentroidsXYZList(Yarn1)
-   X2,Y2,Z2=GetCentroidsXYZList(Yarn2)
+   lim2=len(Yarn2)-1  
+   print(minind1,minind2)    
+   X1=[node.x for node in Yarn1]
+   Y1=[node.y for node in Yarn1]
+   X2=[node.x for node in Yarn2]
+   Y2=[node.y for node in Yarn2]
 
-   start1=abs(minind1-window)
+   start1=minind1-window
+   if start1<0:
+      start1=0
+
    if minind1+window<=lim1:
       end1=minind1+window
    else:
       end1=lim1
 
-   start2=abs(minind2-window)
+   start2=minind2-window
+   if start2<0:
+      start2=0
+
    if minind2+window<=lim2:
       end2=minind2+window
    else:
       end2=lim2
 
-   k1,m1=np.polyfit(np.array(X1[start1]),np.array(end1),1)       
-   k2,m2=np.polyfit(np.array(X2[start2]),np.array(end2),1)
+   k1,m1=np.polyfit(np.array(X1[start1:end1]),np.array(Y1[start1:end1]),1)       
+   k2,m2=np.polyfit(np.array(X2[start2:end2]),np.array(Y2[start2:end2]),1)
 
    x10=X1[start1]
    x11=X1[end1]
@@ -243,10 +302,11 @@ def Find2DIntersection(Yarn1, Yarn2, window):
    p21=XY(x20,k2*x20+m2)
    p22=XY(x21,k2*x21+m2)
    
-   dU1=0.0
-   dU2=0.0
-   LineLineIntersect2D(p11,p12,p21,p22,dU1,dU2)
-   Point=XY(x10+dU1*dx1,k1*(x10+dU1*dx1)+m1)
+   dU1,dU2=SegIntersect(p11,p12,p21,p22)
+   if dU1 and dU2:
+      Point=XY(x10+dU1*dx1,k1*(x10+dU1*dx1)+m1)
+   else:
+      Point=Yarn1[minind1]
    return Point
 
 def BuildControlMesh(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
@@ -260,110 +320,74 @@ def BuildControlMesh(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
    # irregular can be applied for the respective point set, a reverse process based on brick element shape functions
    # can be defined. 
    X,Y,Z=YarnTypeSort(Textile)
-   XCent=[GetCentroidsXYZ(y) for y in X]
-   YCent=[GetCentroidsXYZ(y) for y in Y]
 
-   XHash=[True for y in X]
-   YHash=[True for y in Y]
-
-   XSort=[]
-   YSort=[]
-
-   
-   TopWeft=[]
-   BottomWeft=[]
-   UpperInnerWeft=[]
-   LowerInnerWeft=[]
-   MidWeft=[]
-   UpperWarp=[]
-   LowerWarp=[]
-   UpperBinder=[]
+   window=3
+   UpperBinder=[] 
    LowerBinder=[]
-
    #Replace with the sorting function
-
-   for i,wa in enumerate(X[:-1]):
-       Layer=[]
-       if XHash[i]:
-         XHash[i]=False 
-         Layer.append(XCent[i])
-         m0=wa.GetNode(0).GetPosition() 
-         for j,wa1 in enumerate(X[i+1:]):
-            if XHash[j]:
-              m1=wa1.GetNode(0).GetPosition()
-              V=m1-m0       
-              if CheckY(V):
-                 Layer.append(XCent[j])
-                 XHash[j]=False
-         Layer=sorted(Layer, key=GetY)         
-         XSort.append(Layer)  
-   
-   for i,wa in enumerate(Y[:-1]):
-       Layer=[]
-       if YHash[i]:
-         YHash[i]=False 
-         Layer.append(YCent[i])
-         m0=wa.GetNode(0).GetPosition() 
-         for j,wa1 in enumerate(Y[i+1:]):
-            if YHash[j]:
-              m1=wa1.GetNode(0).GetPosition()
-              V=m1-m0       
-              if CheckX(V):
-                 Layer.append(YCent[j])
-                 YHash[j]=False
-         Layer=sorted(Layer, key=GetX)        
-         YSort.append(Layer)  
+   XSort=SortInPlane(X,'Y', InPlaneNumWarp)
+   YSort=SortInPlane(Y,'X', InPlaneNumWeft)
    TopWeft=YSort[0]
-   BottomWeft=YSort[-1]
-   numtopweft=len(TopWeft)      
+   UpperWarp=XSort[0]
    NumWeftLay=len(YSort)
    MidWeft=YSort[NumWeftLay//2]
    NumWarpLay=len(XSort)
    UpperMidWarp=XSort[NumWarpLay//2]
-   LowerMidWarp=XSort[NumWarpLay//2+1]
+   LowerMidWarp=XSort[NumWarpLay//2+1] 
+   LowerWarp=XSort[-1]
+   BottomWeft=YSort[-1]
+   middz=MidWeft[1][0].z   
    
-   middz=MidWeft[0].GetPosition(0).z
    for yarn in Z:
       if yarn.GetNode(1).GetPosition().z>middz:
          UpperBinder.append(yarn)
       else:
-         LowerBinder.append(yarn)
-   UpperBinderHash=[True for y in UpperBinder]
-   UpperBinderSort=[]
-   UpperBinderCent=[GetCentroidsXYZ(y) for y in UpperBinder]
-   for i,yarn in enumerate(UpperBinder[:-1]):
-       LayerFull=[None for k in numtopweft]
-       Layer=[]
-       poslist=[]
-       if UpperBinderHash[i]:
-         UpperBinderHash[i]=False 
-         Layer.append(UpperBinderCent[i])
-         m0=wa.GetNode(1).GetPosition() 
-         for j,wa1 in enumerate(UpperBinder[i+1:]):
-            if UpperBinderHash[j]:
-               m1=wa1.GetNode(1).GetPosition()
-               V=m1-m0       
-               if CheckX(V):
-                  Layer.append(UpperBinderCent[j])
-                  poslist.append(j)
-                  UpperBinderHash[j]=False
-         Layer=sorted(Layer, key=GetX)   
-         for ind,i in enumerate(poslist):
-             LayerFull[i]=Layer[ind] 
-         UpperBinderSort.append(LayerFull)    
-   #Top leftmost binder is UpperBinderSort[0][0]
-   TopNodePattern=[None for i in numtopweft for j in UpperBinderSort]
-   for i,yarn in enumerate(TopWeft):
-      for j,yarn in enumerate(UpperBinderSort):
-
-      
-
-
+         LowerBinder.append(yarn)   
+   upperz=UpperBinder[0].GetNode(1).GetPosition().z + 0.1
+   lowerz=LowerBinder[0].GetNode(1).GetPosition().z - 0.1        
+   # Top Layer Control Points
+   #Control_Points=[[[None for i in range(InPlaneNumWeft-1)] for j in range(InPlaneNumWarp)] for k in range(3)]
+   Control_Points_Vec=XYZVector()
+   times=0
+   for weft in TopWeft:
+      for warp in UpperWarp:
+         Point1=Find2DIntersection(weft,warp,window)
+         #Control_Points[i][j][2]=XYZ(Point1.x,Point1.y,upperz)
+         Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,upperz))
+   for weft in MidWeft:
+      for j,warp in enumerate(UpperMidWarp):
+         Point1=Find2DIntersection(weft,warp,window)
+         Point2=Find2DIntersection(weft,LowerMidWarp[j],window)  
+         AvPoint=(Point1+Point2)*0.5
+         #Control_Points[i][j][1]=XYZ(AvPoint.x,AvPoint.y,middz)
+         Control_Points_Vec.push_back(XYZ(AvPoint.x,AvPoint.y,middz))
+   for weft in BottomWeft:
+      for warp in LowerWarp:
+         Point1=Find2DIntersection(weft,warp,window)
+         Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,lowerz))
+         #Control_Points[i][j][2]=XYZ(Point1.x,Point1.y,lowerz)
+   #print(Control_Points)
    # Find a way to identify cross over points and yarn section in vicinity
-   ControlMesh=XYZVector()
-   return ControlMesh
+   #ControlMesh=XYZVector()
 
+   return Control_Points_Vec
 
+def RegulariseControlPoints(PointVector,Domain,PlaneNumX,PlaneNumY):
+    NewPointVector=XYZVector()
+    D0=XYZ()
+    D1=XYZ()
+    X=[[p.x,1.0] for p in PointVector]
+    Y=[[1.0,p.y] for p in PointVector]
+    X=np.array(X)
+    Y=np.array(Y)
+    kmeansX=KMeans(n_clusters=PlaneNumX,random_state=0).fit(X)
+    kmeansY=KMeans(n_clusters=PlaneNumY,random_state=0).fit(Y)
+    centX=kmeansX.cluster_centers_[:,0]
+    centY=kmeansY.cluster_centers_[:,1] 
+    print(centX)
+    print(centY)
+
+    return 0
 
 def PlotScatterProj2D(X,Y,Htitle,Vtitle,Title):
    fig1, ax1=plt.subplots()
@@ -380,6 +404,21 @@ def PlotScatterProj2D(X,Y,Htitle,Vtitle,Title):
    plt.show()
    return 0
 
+def PlotScatter3D(Vector):
+   fig1=plt.figure() 
+   ax1=fig1.add_subplot(111,projection='3d')
+
+   X=[p.x for p in Vector]
+   Y=[p.y for p in Vector]
+   Z=[p.z for p in Vector]
+   ax1.scatter(X,Y,Z, marker='o')
+   ax1.set_xlabel('X',fontsize=14)
+   ax1.set_ylabel('Y',fontsize=14)
+   ax1.set_zlabel('Z',fontsize=14)
+   ax1.set_title('Control Points',fontsize=14) 
+   plt.show()
+   return 0
+
 def PlotProjectedCentroids(Textile):
    Warp, Weft, Binder = YarnTypeSort(Textile)
    #warp
@@ -392,7 +431,6 @@ def PlotProjectedCentroids(Textile):
    ax1.set_xlabel('Y',fontsize=14)
    ax1.set_ylabel('Z',fontsize=14)
    ax1.set_title("Warp Projection",fontsize=14)
-
    XL,YL,ZL=GetCentroidsXYZList(WarpLeft)
    XR,YR,ZR=GetCentroidsXYZList(WarpRight)
    ax1.scatter(YL+YR,ZL+ZR, label='Centroid Data')
@@ -422,77 +460,6 @@ def PlotProjectedCentroids(Textile):
    X,Y,Z=GetCentroidsXYZList(Warp+Weft+Binder)
    PlotScatterProj2D(X,Y,'X','Y','XY Projection')
    return 0
-
-
-
-
-#def GetAverageXYTranslations(Warp,Weft,Binder): # Under construction 
-#
-#    ### Compute average translation vectors ################   
-#    ##  translation vector in Y axis:  
-#    dysum=0
-#    Bnum=0
-#    DomainY0=0
-#    DomainY0count=0
-#    for i,b in enumerate(Binder[:-1]):
-#       m0=b.GetNode(2).GetPosition()
-#       mindist=100.0
-#       DVecs=XYZVector()
-#       for b1 in Binder[i+1:]:
-#          m1=b1.GetNode(2).GetPosition()
-#          V=m1-m0    
-#          if CheckY(V):
-#            DVecs.push_back(V)
-#            if abs(V.y)<=mindist:
-#               mindist=abs(V.y)
-#       for v in DVecs:
-#          if v.y <= 1.2*mindist:
-#            dysum+=mindist
-#            Bnum+=1
-#    Wanum=0
-#    for i,wa in enumerate(Warp[:-1]):
-#       m0=wa.GetNode(0).GetPosition()
-#       mindist=100.0
-#       for wa1 in Warp[i+1:]:
-#          m1=wa1.GetNode(0).GetPosition()
-#          V=m1-m0       
-#          if CheckY(V):
-#             DomainY0+=m0.y## To be updated
-#             DomainY0count+=1 
-#          if CheckY(V) and abs(V.y)<=mindist:
-#             mindist=abs(V.y)
-#       if mindist<100.0:       
-#          dysum+=mindist
-#          Wanum+=1
-#
-#    dymean=dysum/(Bnum+Wanum)
-#    print(dymean)    
-#    D0Ymean=DomainY0/DomainY0count
-#
-#    TVy=XYZ(0.0,2*dymean,0.0)
-#    #############
-#    ## Translation vector in X axis ### 
-#    WeftO=tuple(Weft)
-#
-#    del Weft[3]#This is a split yarn - not an accurate centroid
-#    dxsum=0
-#    Wenum=0
-#    for i,we in enumerate(Weft[:-1]):
-#       m0=we.GetNode(0).GetPosition()
-#       mindist=100.0
-#       for we1 in Weft[i+1:]:
-#          m1=we1.GetNode(0).GetPosition()
-#          V=m1-m0        
-#          if CheckX(V) and abs(V.x)<=mindist:
-#             mindist=abs(V.x)
-#       dxsum+=mindist
-#       Wenum+=1
-#
-#    dxmean=dxsum/Wenum
-#    print(dxmean)    
-#    
-#    TVx=XYZ(2*dxmean,0.0,0.0)
-#    return Tx,Ty 
 
 def Extend(Textile,ODomain):
  
@@ -697,25 +664,6 @@ def EnforcePeriodicity(Textile,Domain):
     NewTextile.AssignDomain(Domain)
     return NewTextile
 
-#def AffineTransformation(Textile,TransMat): # Under construction
-#   NewTextile=Textile()
-#   OldYarns=Textile.GetYarns()
-#   for y in OldYarns:
-#      NewYarn=CYarn()
-#      NewYarnSection=CYarnSectionInterpPosition()
-#      SlaveNodes=list(y.GetSlaveNodes(2))
-#      SVector=XYZVector()
-#      SPosList=[]
-#      SecPtsList=[]
-#      NewSecPtsList=[]
-#      for s in SlaveNodes:
-#         SPosList.append(s.GetPosition())
-#         SecPts3D = s.GetSectionPoints()
-#
-#         SecPtsList.append(s.Get2DSectionPoints())
-#         SVector.push_back(s.GetPosition()) 
-#  
-#   return NewTextile
 
 def Assign8thDomain(Textile): #under construction
    
@@ -1191,7 +1139,7 @@ if __name__=='__main__':
     MyYarn=MyYarnDict[y]
     MyNodes=MyYarn.Nodes
     NodeList=MyNodes.GetList([])
-###### Just added - Add extra nodes between partition links 
+######  Add extra nodes between partition links 
 #    num=len(NodeList)
 #    if num>2:
 #      for i in range(num//2-1):
@@ -1214,8 +1162,6 @@ if __name__=='__main__':
       BinderBool=True
     CSection=CYarnSectionInterpPosition()
     CNodeList=[CNode(XYZ(n.Position[0],n.Position[1],n.Position[2])) for n in NodeList]
-    
-
 
     for sec in MySections:
       MySection=MySections[sec]
@@ -1241,7 +1187,7 @@ if __name__=='__main__':
           LocPolygon=LocPolygon[::-1] # Fixes hollow rendering (if needed)
         elif Direction in ['Y','y']:
           MNPos=np.array([N.Position[0],N.Position[2]])
-          LocPolygon=(MyPolygon-MNPos)*np.array([1.0,1.0])
+          LocPolygon=(MyPolygon-MNPos)*np.array([1.0,1.0])   
           LocPolygon=LocPolygon[::-1]
         elif Direction in ['Z','z']:
           MNPos=np.array([N.Position[0],N.Position[1]])
@@ -1290,10 +1236,14 @@ if __name__=='__main__':
   #NewTex,NewDomain=Extend(Textile,CDomain)
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)
   #NewTex.AssignDomain(CDomain)
+  ControlPts=BuildControlMesh(Textile,CDomain,4,2)
+  RegulariseControlPoints(ControlPts,CDomain,4,2)
+  print(len(ControlPts))
   Textile.AssignDomain(CDomain)
   #AddTextile('Rec9',NewTex)
   AddTextile('Rec9',Textile)
   #PlotProjectedCentroids(Textile)
+  PlotScatter3D(ControlPts)
   SaveToXML(cwd+'\\Reconstruction10.tg3',"",OUTPUT_STANDARD)
 
 
