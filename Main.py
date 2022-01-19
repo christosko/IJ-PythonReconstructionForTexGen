@@ -6,6 +6,9 @@ from os import listdir
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D 
 from sklearn.cluster import KMeans
+import imp
+import ControlMesh as cm
+imp.reload(cm)
 cwd=os.getcwd()
 sys.path.append(cwd)
 #Requires a minimum build of texgen and a path pointing to Python libraries
@@ -253,6 +256,7 @@ def SortInPlane(YarnSet,Axis,NumInPlane):
 
 def Find2DIntersection(Yarn1, Yarn2, window):
    mindist=1e5
+   #Find closest slave points first 
    for i,slave in enumerate(Yarn1):
        ind=GetClosestPointIndex(Yarn2,slave)
        nearpoint=Yarn2[ind]
@@ -268,7 +272,7 @@ def Find2DIntersection(Yarn1, Yarn2, window):
    Y1=[node.y for node in Yarn1]
    X2=[node.x for node in Yarn2]
    Y2=[node.y for node in Yarn2]
-
+   #Determin neighbouring slave points to consider for local curves using the window variable
    start1=minind1-window
    if start1<0:
       start1=0
@@ -286,7 +290,7 @@ def Find2DIntersection(Yarn1, Yarn2, window):
       end2=minind2+window
    else:
       end2=lim2
-
+   #Fit lines for points neighbouring the closest slave points 
    k1,m1=np.polyfit(np.array(X1[start1:end1]),np.array(Y1[start1:end1]),1)       
    k2,m2=np.polyfit(np.array(X2[start2:end2]),np.array(Y2[start2:end2]),1)
 
@@ -384,8 +388,6 @@ def RegulariseControlPoints(PointVector,Domain,PlaneNumX,PlaneNumY):
     kmeansY=KMeans(n_clusters=PlaneNumY,random_state=0).fit(Y)
     centX=kmeansX.cluster_centers_[:,0]
     centY=kmeansY.cluster_centers_[:,1] 
-    print(centX)
-    print(centY)
 
     return 0
 
@@ -1067,8 +1069,8 @@ class SlaveNode:
 
 if __name__=='__main__':
   #Get in the appropriate VF folder 
-  cwd=cwd+'\\VF55'
-  os.chdir(cwd)
+  cwdvf=cwd+'\\VF55'
+  os.chdir(cwdvf)
   
   #Get data for window size and resolution:
   
@@ -1085,10 +1087,10 @@ if __name__=='__main__':
   CDomain=CDomainPlanes(CP1,CP2) # TexGen domain class
   #Polygon Data folder:
   DatFold='\\Data8'
-  os.chdir(cwd+DatFold)
+  os.chdir(cwdvf+DatFold)
   # Store Files:
-  FileList=[(f.replace('.dat','')).split('_') for f in listdir(cwd+DatFold)] # list of info from names
-  FileNames=[f for f in listdir(cwd+DatFold)] # full names
+  FileList=[(f.replace('.dat','')).split('_') for f in listdir(cwdvf+DatFold)] # list of info from names
+  FileNames=[f for f in listdir(cwdvf+DatFold)] # full names
   # Initialise auxiliary class: 
   MyYarns=Yarns(0)
   i=0
@@ -1099,7 +1101,7 @@ if __name__=='__main__':
     Index=int(file[2])
     Slice=int(file[3])*ImgRes
     Sign=None
-    Polygon=np.genfromtxt(cwd+DatFold+'\\'+FileNames[i])*ImgRes
+    Polygon=np.genfromtxt(cwdvf+DatFold+'\\'+FileNames[i])*ImgRes
     #Polygon=RotateArray(Polygon,0.5)
     if Direction in ['Z','z']:
        try: 
@@ -1237,8 +1239,27 @@ if __name__=='__main__':
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)
   #NewTex.AssignDomain(CDomain)
   ControlPts=BuildControlMesh(Textile,CDomain,4,2)
+  mesh,gnodes=cm.BuildMesh(ControlPts,4,2,3)
+  os.chdir(cwd)
+  file=open('TestMesh.inp','w')
+  file.write('*Node\n')
+  for i in gnodes:
+      node=gnodes[i]
+      pos=node.Position
+      file.write(str(i)+', '+str(pos.x)+', '+str(pos.y)+', '+str(pos.z)+'\n')
+  file.write('*Element, Type=C3D8R\n')
+  for el in mesh:
+     string=''
+     for n in el.Connectivity:
+        string+=', '+str(n)
+     file.write(str(el.Index)+string+'\n')
+  file.write('*NSet, NSet=hold, Unsorted\n1\n*Boundary\nhold,1,1\n')
+  file.write('*Step, Name=myStep\n*Static\n*End Step\n')
+
+  file.close()   
+  
   RegulariseControlPoints(ControlPts,CDomain,4,2)
-  print(len(ControlPts))
+
   Textile.AssignDomain(CDomain)
   #AddTextile('Rec9',NewTex)
   AddTextile('Rec9',Textile)
