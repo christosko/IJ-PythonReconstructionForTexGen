@@ -14,6 +14,8 @@ class BrickElement:
         self.Index=int(Index)
         self.Nodes=[]
         self.Connectivity=[]
+        self.ShapeFunctions=[]
+        self.DataPoints=[]
 
     def InsertNode(self,node):
         if isinstance(node,Node):
@@ -22,6 +24,9 @@ class BrickElement:
         else:
            print 'Invalide type for node\n'
            return None
+    def ShapeFunction(self):
+        self.ShapeFunctions=GlobalShapeFunctions(self)
+        return 0        
 
 class Node:
      def __init__(self,Index,Position):
@@ -46,7 +51,7 @@ class GlobalShapeFunctions:
            Nodes=Element.Nodes
            if Nodes:           
               p=[]
-              ShapeCoeffs=np.empty[8,8]
+              ShapeCoeffs=np.empty([8,8])
               G=np.empty([8,8])
               for i,n in enumerate(Nodes):
                  p=n.Position
@@ -56,8 +61,8 @@ class GlobalShapeFunctions:
               for i,n in enumerate(Nodes):
                  delta=np.zeros([1,8])
                  delta[0][i]=1
-                 coeffs=np.dot(InvG,delta)
-                 ShapeCoeffs[i]=coeffs
+                 coeffs=np.dot(InvG,np.transpose(delta))
+                 ShapeCoeffs[i]=np.transpose(coeffs)
               self.Coefficients=ShapeCoeffs 
            else:
               print 'Failed to initialise: Nodes not found\n' 
@@ -134,15 +139,20 @@ def BuildMesh(Points,NumYZPlanes,NumXZPlanes,NumXYPlanes):
     xmax=NumYZPlanes
     ymax=NumXZPlanes
     zmax=NumXYPlanes
-    xlabels=SortPlaneLabels(kmeansX.labels_,kmeansX.cluster_centers_)
-    ylabels=SortPlaneLabels(kmeansY.labels_,kmeansY.cluster_centers_)
-    zlabels=SortPlaneLabels(kmeansZ.labels_,kmeansZ.cluster_centers_)
+    xclust=kmeansX.cluster_centers_
+    yclust=kmeansY.cluster_centers_
+    zclust=kmeansZ.cluster_centers_
+    xlabels=SortPlaneLabels(kmeansX.labels_,xclust)
+    ylabels=SortPlaneLabels(kmeansY.labels_,yclust)
+    zlabels=SortPlaneLabels(kmeansZ.labels_,zclust)
     
     GlobalNodes={}
-    
+    RegGlobalNodes={}
     for i,x in enumerate(xlabels):
       index=x+1+xmax*ylabels[i]+xmax*ymax*zlabels[i]  
       GlobalNodes[index]=Node(index,Points[i])
+      regpos=XYZ(xclust[xlabels[i]][0],yclust[ylabels[i]][0],zclust[zlabels[i]][0])
+      RegGlobalNodes[index]=Node(index,regpos)
 
     addY=xmax
     addZ=xmax*ymax
@@ -157,25 +167,103 @@ def BuildMesh(Points,NumYZPlanes,NumXZPlanes,NumXYPlanes):
       ] for i in range(1,xmax) for j in range(ymax-1) for k in range(zmax-1)]
 
     Elements=[]
+    RegElements=[]
     for i,e in enumerate(Conn):
        myElement=BrickElement(i+1)
+       myRegElement=BrickElement(i+1)
        for n in e:
          myElement.InsertNode(GlobalNodes[n])
+         myRegElement.InsertNode(GlobalNodes[n])
          GlobalNodes[n].ElementsShared.append(i)
+         RegGlobalNodes[n].ElementsShared.append(i)
+         myElement.ShapeFunction()
+         myRegElement.ShapeFunction()
        myElement.Connectivity=e  
-       Elements.append(myElement)        
-    return Elements,GlobalNodes
+       myRegElement.Connectivity=e
+       Elements.append(myElement) 
+       RegElements.append(myRegElement)       
+    return Elements, RegElements
 
+def TrasformationMatrix(FaceNodes):
+    #Nodes are assumed to be coplanar. Needs checking 
+    #Face nodes are in counter clockwise order (right hand rule)
+    P1=FaceNodes[0]
+    P2=FaceNodes[1]
+    P3=FaceNodes[2]
+    P4=FaceNodes[3]
+    v12=P2-P1
+    v14=P4-P1
+    outv=CrossProduct(v12,v14)
+    w=outv*(1/GetLength(outv))
+    #print(w)
+    u=v12*(1/GetLength(v12))
+    v=CrossProduct(w,u)
+    i=XYZ(1.0,0.0,0.0)
+    j=XYZ(0.0,1.0,0.0)
+    k=XYZ(0.0,0.0,1.0)
+    T=np.array([[DotProduct(u,i),DotProduct(u,j),DotProduct(u,k)],
+    [DotProduct(v,i),DotProduct(v,j),DotProduct(v,k)],
+    [DotProduct(w,i),DotProduct(w,j),DotProduct(w,k)]])
+
+    return T 
+
+def PointInHex(Point,NodesVector):
+    # Node list is in abaqus convention order : 1st 4 inward facing normal bottom 
+    # face and 2nd 4 outward facing normal top face
+    # 6 faces with outward pointing normal vectors need to be defined    
+    IN=[False for i in range(6)]
+    N=NodesVector
+    FaceNodesInds=[
+    [0,3,2,1],
+    [0,4,7,3],
+    [4,5,6,7],
+    [5,1,2,6],
+    [0,1,5,4],
+    [3,7,6,2]    
+    ]
+    FaceNodes=[[N[i] for i in n] for n in FaceNodesInds]
+
+    TMats=[TrasformationMatrix(Face) for Face in FaceNodes]
+
+    PointV=np.array([Point.x,Point.y,Point.z])
+    for i,T in enumerate(TMats):
+        PointVT=np.dot(T,PointV)
+        Node1Pos=np.array([FaceNodes[i][0].x,FaceNodes[i][0].y,FaceNodes[i][0].z])
+        N1T=np.dot(T,Node1Pos)
+        LPointVT=PointVT-N1T
+        if LPointVT[2]<=0:
+            IN[i]=True
+  
+    return all(IN)
+
+def UndistortedPointCloud(PointCloud,DistMesh,RegMesh):
+    UPointCloud=XYZVector()
+    # Points need to be labeled based on the element the lie in 
+    # This is achieved by checking if a point lies in a hexahedron 
+    
+    return UPointCloud 
 if __name__=='__main__':
-    test=XYZVector()
-    for i in range(5):
-        for j in range(4):
-            for k in range(3):
-                test.push_back(XYZ(i*2.6,j*1.8,k*1.3))
-    mesh=BuildMesh(test,5,4,3)
-    file=open('TestMesh.inp','w')
-    file.write('*Node\n')
-    for i,node in enumerate(test):
-        file.write(str(i)+', '+str(node.x))
+    #test=XYZVector()
+    #for i in range(5):
+    #    for j in range(4):
+    #        for k in range(3):
+    #            test.push_back(XYZ(i*2.6,j*1.8,k*1.3))
+    #mesh,gnodes=BuildMesh(test,5,4,3)
+    #file=open('TestMesh.inp','w')
+    #file.write('*Node\n')
+    #for i,node in enumerate(test):
+    #    file.write(str(i)+', '+str(node.x))
+    N=XYZVector()
+    N.push_back(XYZ(0,0,0))
+    N.push_back(XYZ(1,0,0))#(1.2,-0.4,-0.3))
+    N.push_back(XYZ(1,1,0))#(0.8,1.3,0.0))
+    N.push_back(XYZ(0,1,0))#(-0.1,1.34,-0.1))
+    N.push_back(XYZ(0,0,1))#(0.08,-0.1,1.04))
+    N.push_back(XYZ(1,0,1))#(1.1,0.05,0.9))
+    N.push_back(XYZ(1,1,1))#(1.23,1.13,1.03))
+    N.push_back(XYZ(0,1,1))#(-0.04,0.94,1.1))
+    P=XYZ(0.999,0.5,0.5)
+    print(PointInHex(P,N))
+
 
 

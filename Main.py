@@ -666,6 +666,19 @@ def EnforcePeriodicity(Textile,Domain):
     NewTextile.AssignDomain(Domain)
     return NewTextile
 
+def GetPointCloud(Textile):
+   #To do 
+   Yarns=Textile.GetYarns()
+   PointCloud=XYZVector()
+   for yarn in Yarns:
+      slavenodes=yarn.GetSlaveNodes(2)
+      for s in slavenodes:
+         secpts=s.GetSectionPoints()
+         for point in secpts:
+            PointCloud.push_back(point)   
+   return PointCloud
+
+
 
 def Assign8thDomain(Textile): #under construction
    
@@ -1240,25 +1253,38 @@ if __name__=='__main__':
   #NewTex.AssignDomain(CDomain)
   ControlPts=BuildControlMesh(Textile,CDomain,4,2)
   mesh,gnodes=cm.BuildMesh(ControlPts,4,2,3)
-  os.chdir(cwd)
-  file=open('TestMesh.inp','w')
-  file.write('*Node\n')
-  for i in gnodes:
-      node=gnodes[i]
-      pos=node.Position
-      file.write(str(i)+', '+str(pos.x)+', '+str(pos.y)+', '+str(pos.z)+'\n')
-  file.write('*Element, Type=C3D8R\n')
-  for el in mesh:
-     string=''
-     for n in el.Connectivity:
-        string+=', '+str(n)
-     file.write(str(el.Index)+string+'\n')
-  file.write('*NSet, NSet=hold, Unsorted\n1\n*Boundary\nhold,1,1\n')
-  file.write('*Step, Name=myStep\n*Static\n*End Step\n')
+  #os.chdir(cwd)
+  #file=open('TestMesh.inp','w')
+  #file.write('*Node\n')
+  #for i in gnodes:
+  #    node=gnodes[i]
+  #    pos=node.Position
+  #    file.write(str(i)+', '+str(pos.x)+', '+str(pos.y)+', '+str(pos.z)+'\n')
+  #file.write('*Element, Type=C3D8R\n')
+  #for el in mesh:
+  #   string=''
+  #   for n in el.Connectivity:
+  #      string+=', '+str(n)
+  #   file.write(str(el.Index)+string+'\n')
+  #file.write('*NSet, NSet=hold, Unsorted\n1\n*Boundary\nhold,1,1\n')
+  #file.write('*Step, Name=myStep\n*Static\n*End Step\n')
+#
+  #file.close()   
+  #
+  #RegulariseControlPoints(ControlPts,CDomain,4,2)
+  N=XYZVector()
+  N.push_back(XYZ(0,0,0))
+  N.push_back(XYZ(1,0,0))#(1.2,-0.4,-0.3))
+  N.push_back(XYZ(1,1,0))#(0.8,1.3,0.0))
+  N.push_back(XYZ(0,1,0))#(-0.1,1.34,-0.1))
+  N.push_back(XYZ(0,0,1))#(0.08,-0.1,1.04))
+  N.push_back(XYZ(1,0,1))#(1.1,0.05,0.9))
+  N.push_back(XYZ(1,1,1))#(1.23,1.13,1.03))
+  N.push_back(XYZ(0,1,1))#(-0.04,0.94,1.1))
 
-  file.close()   
+  P=XYZ(0.51,0.5,0.5)
   
-  RegulariseControlPoints(ControlPts,CDomain,4,2)
+  print(cm.PointInHex(P,N))
 
   Textile.AssignDomain(CDomain)
   #AddTextile('Rec9',NewTex)
@@ -1269,7 +1295,6 @@ if __name__=='__main__':
 
 
     
-
 
 
 

@@ -20,5 +20,5 @@ tosort.push_back(XYZ(1.3,10.5,3.2))
 tosort.push_back(XYZ(21.3,9.2,3.2))
 
 print(tosort)
-vecsort=sorted(tosort,key=[0].y)
+vecsort=sorted(tosort,key=y)
 print(vecsort)
