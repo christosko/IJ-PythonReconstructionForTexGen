@@ -1,9 +1,11 @@
+from locale import normalize
 import numpy as np
 import math as m
 import os
 import sys
 from os import listdir
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D 
 from sklearn.cluster import KMeans
 import imp
@@ -313,7 +315,7 @@ def Find2DIntersection(Yarn1, Yarn2, window):
       Point=Yarn1[minind1]
    return Point
 
-def BuildControlMesh(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
+def BuildControlMesh(Textile,InPlaneNumWeft,InPlaneNumWarp):
    # Control points are defined a set of points which characterise the architecture pattern distortion
    # The points are supposed to be spaced irregularly because the geometry is distortded
    # By connecting the control point to form a brick mesh of the domain, each element contains
@@ -376,7 +378,7 @@ def BuildControlMesh(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
 
    return Control_Points_Vec
 
-def RegulariseControlPoints(PointVector,Domain,PlaneNumX,PlaneNumY):
+def RegulariseControlPoints(PointVector,PlaneNumX,PlaneNumY):
     NewPointVector=XYZVector()
     D0=XYZ()
     D1=XYZ()
@@ -406,20 +408,59 @@ def PlotScatterProj2D(X,Y,Htitle,Vtitle,Title):
    plt.show()
    return 0
 
-def PlotScatter3D(Vector):
-   fig1=plt.figure() 
-   ax1=fig1.add_subplot(111,projection='3d')
+def PlotScatter3D(Vector,ax1,colour):
+   #fig1=plt.figure() 
+   #ax1=fig1.add_subplot(111,projection='3d')
 
    X=[p.x for p in Vector]
    Y=[p.y for p in Vector]
    Z=[p.z for p in Vector]
-   ax1.scatter(X,Y,Z, marker='o')
+   ax1.scatter(X,Y,Z, marker='.',color=colour)
+   ax1.set_xlabel('X',fontsize=14,fontweight='bold')
+   ax1.set_ylabel('Y',fontsize=14,fontweight='bold')
+   ax1.set_zlabel('Z',fontsize=14,fontweight='bold')
+   ax1.set_title('Control Points',fontsize=18,fontweight='bold') 
+   #plt.show()
+   return 0
+def Red(len_ratio):
+   if len_ratio>0.5:
+      return len_ratio
+   else:
+      return 0.0
+def Blue(len_ratio):
+   if len_ratio<0.5:
+      return 1.0-len_ratio
+   else:
+      return 0.0
+def Green(len_ratio):
+   if len_ratio>=0.5:
+      return 2.0-2.0*len_ratio
+   else:
+      return 2.0*len_ratio                 
+def PlotVectorField3D(Vector1,Vector2,ax1):
+   #fig1=plt.figure() 
+   #ax1=fig1.add_subplot(111,projection='3d')
+   
+   X1=np.array([p.x for p in Vector1])
+   Y1=np.array([p.y for p in Vector1])
+   Z1=np.array([p.z for p in Vector1])
+   
+   X2=np.array([p.x for p in Vector2])
+   Y2=np.array([p.y for p in Vector2])
+   Z2=np.array([p.z for p in Vector2])
+   Lens=np.sqrt(np.power(X2-X1,2)+np.power(Y2-Y1,2)+np.power(Z2-Z1,2))
+   max_len=Lens.max()
+   min_len=Lens.min()
+   NLens=Lens/max_len
+   ColourMap=[(Red(l),Green(l),Blue(l)) for l in NLens]
+   ax1.quiver(X1,Y1,Z1,X2-X1,Y2-Y1,Z2-Z1,length=0.1, normalize=False, colors=ColourMap)
+ 
    ax1.set_xlabel('X',fontsize=14)
    ax1.set_ylabel('Y',fontsize=14)
    ax1.set_zlabel('Z',fontsize=14)
-   ax1.set_title('Control Points',fontsize=14) 
-   plt.show()
-   return 0
+   ax1.set_title('Control Points',fontsize=14)    
+ 
+   return min_len,max_len
 
 def PlotProjectedCentroids(Textile):
    Warp, Weft, Binder = YarnTypeSort(Textile)
@@ -1252,7 +1293,9 @@ if __name__=='__main__':
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)
   #NewTex.AssignDomain(CDomain)
   ControlPts=BuildControlMesh(Textile,CDomain,4,2)
-  mesh,gnodes=cm.BuildMesh(ControlPts,4,2,3)
+  DataPts=GetPointCloud(Textile)
+  mesh,regmesh=cm.BuildMesh(ControlPts,4,2,3)
+
   #os.chdir(cwd)
   #file=open('TestMesh.inp','w')
   #file.write('*Node\n')
@@ -1271,27 +1314,62 @@ if __name__=='__main__':
 #
   #file.close()   
   #
-  #RegulariseControlPoints(ControlPts,CDomain,4,2)
-  N=XYZVector()
-  N.push_back(XYZ(0,0,0))
-  N.push_back(XYZ(1,0,0))#(1.2,-0.4,-0.3))
-  N.push_back(XYZ(1,1,0))#(0.8,1.3,0.0))
-  N.push_back(XYZ(0,1,0))#(-0.1,1.34,-0.1))
-  N.push_back(XYZ(0,0,1))#(0.08,-0.1,1.04))
-  N.push_back(XYZ(1,0,1))#(1.1,0.05,0.9))
-  N.push_back(XYZ(1,1,1))#(1.23,1.13,1.03))
-  N.push_back(XYZ(0,1,1))#(-0.04,0.94,1.1))
-
-  P=XYZ(0.51,0.5,0.5)
   
-  print(cm.PointInHex(P,N))
+  regmesh=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
+  fig=plt.figure()
+  font={'family':'normal',
+        'weight':'bold',
+        'size'  : 14}
+  plt.rc('font',**font)      
+  ax=fig.add_subplot(111,projection='3d')
+  PlotScatter3D(ControlPts,ax,'black')
+  
+  #Plot Region : Comment lines according to designated plotting sections
 
-  Textile.AssignDomain(CDomain)
+  ###Plot scatter of data points in control mesh
+  #numofel=len(mesh)
+  #CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.0,1.0,numofel)]
+  #for i,e in enumerate(mesh):
+  #   PlotScatter3D(e.DataPoints,ax,CoMap[i])
+  #ax.set_xlim(0.0,10.0)
+  #ax.set_ylim(0.0,10.0)
+  #ax.set_zlim(0.0,10.0)
+  #ax.set_aspect('auto',adjustable=None)
+  #ax.set_axis_off()
+  #norm=mpl.colors.Normalize(vmin=0,vmax=int(numofel))
+  #cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')     
+  #SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+  #SM.set_array([])
+  #fig.colorbar(SM, label='Element')  
+  ### end
+  
+  ###Plot displacement vector field:
+  #InPoints=XYZVector()
+  #OutPoints=XYZVector()
+  #for i in range(len(regmesh)):
+  #    for j in range(len(regmesh[i].DataPoints)):
+  #       InPoints.push_back(mesh[i].DataPoints[j])
+  #       OutPoints.push_back(regmesh[i].DataPoints[j]) 
+  #minlen,maxlen=PlotVectorField3D(InPoints,OutPoints,ax)
+  ax.set_xlim(0.0,9.0)
+  ax.set_ylim(0.0,9.0)
+  ax.set_zlim(0.0,6.0)
+  ax.set_aspect('auto',adjustable=None)
+  #CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.0,1.0,20)]
+  #norm=mpl.colors.Normalize(vmin=minlen,vmax=maxlen)
+  #cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')
+  #SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+  #SM.set_array([])
+  #fig.colorbar(SM, label='Displacement [mm]')
+  ###end
+  
+  plt.show() # Comment accordingly
+
+  #Finalise and save TG3 file:
+  #Textile.AssignDomain(CDomain)
   #AddTextile('Rec9',NewTex)
-  AddTextile('Rec9',Textile)
-  #PlotProjectedCentroids(Textile)
-  PlotScatter3D(ControlPts)
-  SaveToXML(cwd+'\\Reconstruction10.tg3',"",OUTPUT_STANDARD)
+  #AddTextile('Rec9',Textile)
+  #SaveToXML(cwd+'\\Reconstruction10.tg3',"",OUTPUT_STANDARD)
 
 
     
