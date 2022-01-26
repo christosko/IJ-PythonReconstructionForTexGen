@@ -312,10 +312,10 @@ def Find2DIntersection(Yarn1, Yarn2, window):
    if dU1 and dU2:
       Point=XY(x10+dU1*dx1,k1*(x10+dU1*dx1)+m1)
    else:
-      Point=Yarn1[minind1]
+      Point=XY(Yarn1[minind1].x,Yarn1[minind1].y)
    return Point
 
-def BuildControlMesh(Textile,InPlaneNumWeft,InPlaneNumWarp):
+def BuildControlPoints(Textile,InPlaneNumWeft,InPlaneNumWarp):
    # Control points are defined a set of points which characterise the architecture pattern distortion
    # The points are supposed to be spaced irregularly because the geometry is distortded
    # By connecting the control point to form a brick mesh of the domain, each element contains
@@ -415,11 +415,11 @@ def PlotScatter3D(Vector,ax1,colour):
    X=[p.x for p in Vector]
    Y=[p.y for p in Vector]
    Z=[p.z for p in Vector]
-   ax1.scatter(X,Y,Z, marker='.',color=colour)
+   ax1.scatter(X,Y,Z, marker='.',color=colour,linewidths=3)
    ax1.set_xlabel('X',fontsize=14,fontweight='bold')
    ax1.set_ylabel('Y',fontsize=14,fontweight='bold')
    ax1.set_zlabel('Z',fontsize=14,fontweight='bold')
-   ax1.set_title('Control Points',fontsize=18,fontweight='bold') 
+   #ax1.set_title('Control Points',fontsize=18,fontweight='bold') 
    #plt.show()
    return 0
 def Red(len_ratio):
@@ -453,12 +453,17 @@ def PlotVectorField3D(Vector1,Vector2,ax1):
    min_len=Lens.min()
    NLens=Lens/max_len
    ColourMap=[(Red(l),Green(l),Blue(l)) for l in NLens]
-   ax1.quiver(X1,Y1,Z1,X2-X1,Y2-Y1,Z2-Z1,length=0.1, normalize=False, colors=ColourMap)
+   ArrHeadCMap=[]
+   for c in ColourMap:
+      ArrHeadCMap.append(c)
+      ArrHeadCMap.append(c)
+
+   ax1.quiver(X1,Y1,Z1,X2-X1,Y2-Y1,Z2-Z1, normalize=False, colors=ColourMap+ArrHeadCMap)
  
-   ax1.set_xlabel('X',fontsize=14)
-   ax1.set_ylabel('Y',fontsize=14)
-   ax1.set_zlabel('Z',fontsize=14)
-   ax1.set_title('Control Points',fontsize=14)    
+   ax1.set_xlabel('X',fontsize=18, fontweight='bold')
+   ax1.set_ylabel('Y',fontsize=18, fontweight='bold')
+   ax1.set_zlabel('Z',fontsize=18, fontweight='bold')
+   #ax1.set_title('Control Points',fontsize=20)    
  
    return min_len,max_len
 
@@ -719,8 +724,6 @@ def GetPointCloud(Textile):
             PointCloud.push_back(point)   
    return PointCloud
 
-
-
 def Assign8thDomain(Textile): #under construction
    
    return Textile
@@ -920,7 +923,6 @@ class Yarns: # This class, after initialisation, takes sections using InsertSect
      
      return Count
  
-       
 class Section: #Data binary tree for signle direction section sequence - recursive method
 
   def __init__(self,Index,Slice,Polygon,Direction,Sign):
@@ -1033,7 +1035,6 @@ class Section: #Data binary tree for signle direction section sequence - recursi
      print(self.Slice)
      if self.right:
        self.right.PrintTree()  
-
 
 class MasterNode:
 
@@ -1281,21 +1282,33 @@ if __name__=='__main__':
 
     CYarn0.AssignInterpolation(Interpolation)
     # Adjusted resolution depending on yarn type. 
+    #Original:
+    #if BinderBool:
+    #  CYarn0.SetResolution(int(NumSlices*0.6),50)
+    #else:
+    #  CYarn0.SetResolution(int(NumSlices*0.8),80) 
+
     if BinderBool:
-      CYarn0.SetResolution(int(NumSlices*0.6),50)
+      CYarn0.SetResolution(int(NumSlices*0.6),20)
     else:
-      CYarn0.SetResolution(int(NumSlices*0.8),100) 
+      CYarn0.SetResolution(int(NumSlices*0.8),40)
+
     Textile.AddYarn(CYarn0)
 
-  #Save tg3 file  
-  
+   
+  ##
   #NewTex,NewDomain=Extend(Textile,CDomain)
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)
   #NewTex.AssignDomain(CDomain)
-  ControlPts=BuildControlMesh(Textile,CDomain,4,2)
+  ##
+  ##Find control points from TexGen model, build mesh and compute regularised point cloud
+  ControlPts=BuildControlPoints(Textile,4,2)
   DataPts=GetPointCloud(Textile)
   mesh,regmesh=cm.BuildMesh(ControlPts,4,2,3)
-
+  regmesh=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
+  ##
+  
+  #Save Abaqus mesh
   #os.chdir(cwd)
   #file=open('TestMesh.inp','w')
   #file.write('*Node\n')
@@ -1311,58 +1324,56 @@ if __name__=='__main__':
   #   file.write(str(el.Index)+string+'\n')
   #file.write('*NSet, NSet=hold, Unsorted\n1\n*Boundary\nhold,1,1\n')
   #file.write('*Step, Name=myStep\n*Static\n*End Step\n')
-#
   #file.close()   
-  #
+  ###
   
-  regmesh=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
   fig=plt.figure()
   font={'family':'normal',
-        'weight':'bold',
-        'size'  : 14}
-  plt.rc('font',**font)      
+        'weight':'normal',
+        'size'  : 16}
+  plt.rc('font',**font)  
   ax=fig.add_subplot(111,projection='3d')
   PlotScatter3D(ControlPts,ax,'black')
   
   #Plot Region : Comment lines according to designated plotting sections
 
   ###Plot scatter of data points in control mesh
-  #numofel=len(mesh)
-  #CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.0,1.0,numofel)]
-  #for i,e in enumerate(mesh):
-  #   PlotScatter3D(e.DataPoints,ax,CoMap[i])
-  #ax.set_xlim(0.0,10.0)
-  #ax.set_ylim(0.0,10.0)
-  #ax.set_zlim(0.0,10.0)
-  #ax.set_aspect('auto',adjustable=None)
-  #ax.set_axis_off()
-  #norm=mpl.colors.Normalize(vmin=0,vmax=int(numofel))
-  #cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')     
-  #SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
-  #SM.set_array([])
-  #fig.colorbar(SM, label='Element')  
+  numofel=len(mesh)
+  CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.1,1.0,numofel)]
+  for i,e in enumerate(mesh):
+     PlotScatter3D(e.DataPoints,ax,CoMap[i])
+  ax.set_xlim(0.5,8.5)
+  ax.set_ylim(0.5,8.5)
+  ax.set_zlim(0.0,8)
+  ax.set_aspect('auto',adjustable=None)
+  ax.set_axis_off()
+  norm=mpl.colors.Normalize(vmin=0,vmax=int(numofel))
+  cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')     
+  SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+  SM.set_array([])
+  fig.colorbar(SM, label='Element')  
   ### end
   
   ###Plot displacement vector field:
   #InPoints=XYZVector()
-  #OutPoints=XYZVector()
-  #for i in range(len(regmesh)):
+  #OutPoints=XYZVector()  
+  #for i in range(numofel):
   #    for j in range(len(regmesh[i].DataPoints)):
   #       InPoints.push_back(mesh[i].DataPoints[j])
   #       OutPoints.push_back(regmesh[i].DataPoints[j]) 
   #minlen,maxlen=PlotVectorField3D(InPoints,OutPoints,ax)
-  ax.set_xlim(0.0,9.0)
-  ax.set_ylim(0.0,9.0)
-  ax.set_zlim(0.0,6.0)
-  ax.set_aspect('auto',adjustable=None)
+  #ax.set_xlim(0.5,8.5)
+  #ax.set_ylim(0.5,8.5)
+  #ax.set_zlim(0.0,8)
+  #ax.set_aspect('auto',adjustable=None)
   #CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.0,1.0,20)]
   #norm=mpl.colors.Normalize(vmin=minlen,vmax=maxlen)
   #cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')
   #SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
   #SM.set_array([])
-  #fig.colorbar(SM, label='Displacement [mm]')
-  ###end
-  
+  #CoBar=fig.colorbar(SM)
+  #CoBar.set_label(label='Displacement [mm]',size=16,weight='bold')
+  ###end    
   plt.show() # Comment accordingly
 
   #Finalise and save TG3 file:
