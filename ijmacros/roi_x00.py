@@ -6,9 +6,10 @@ import os
 image = IJ.getImage()
 # Get current ROI
 roi = image.getRoi()
+roi=roi.getInterpolatedPolygon(5,True)
 slic=image.getSlice()
 ### Define : 
-insert='Z_52_1_' + str(slic)# + '_-1'
+insert='X_3_0_' + str(slic)# + '_-1'
 ###
 upper=True
 ####
@@ -20,12 +21,13 @@ elif insert_break[2]=='1' and not upper:
    
 if roi:
     # Get ROI points
-    polygon = roi.getPolygon()
+    #polygon = roi.getPolygon()
+    polygon = roi #= polygon.getInterpolatedPolygon(5,True)
     n_points = polygon.npoints
     x = polygon.xpoints
     y = polygon.ypoints
 
-    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF55\\Data8\\'
+    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF64\\Data\\'
     fileName=insert + '.dat'
     if os.path.isdir(dirPath):
       f = open(dirPath+fileName, 'w')

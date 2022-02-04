@@ -13,9 +13,9 @@ imp=IJ.getImage()
 image = imp.getImageStack()
 # Get measured polygons
 cwd=os.getcwd()
-dataloc='D:\\IJPythonReconstructionOfTexComp\\VF55\\Data8'
+dataloc='D:\\IJPythonReconstructionOfTexComp\\VF64\\Data'
 #Axis:
-ax='Y'
+ax='X'
 dats=[d for d in listdir(dataloc) if '.dat' in d and ax in d] # Change for slice direction
 ##
 MyOverlay=Overlay()
@@ -35,8 +35,8 @@ for i,d in enumerate(dats):
   N=0
   for l in lines:
     coo=l.split(' ')
-    x=int(coo[0])
-    y=int(coo[2])
+    x=int(float(coo[0]))
+    y=int(float(coo[2]))
     Polygon.addPoint(x,y)
     sumx+=x
     sumy+=y
@@ -48,6 +48,7 @@ for i,d in enumerate(dats):
   Label=TextRoi(ax,ay,str(YarnIndex))
   Label.setPosition(Slice)
   MyOverlay.add(Label)
+  fil.close()
 imp.setOverlay(MyOverlay)
  
   

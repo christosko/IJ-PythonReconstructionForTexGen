@@ -1,3 +1,4 @@
+from ast import Global
 from locale import normalize
 import numpy as np
 import math as m
@@ -36,20 +37,33 @@ def NodeDistance(N0,N1):
   dy=N0.Position[1]-N1.Position[1]
   dz=N0.Position[2]-N1.Position[2]
   return m.sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2))
-def ClosestIndex(Arr,TargetAngle,Centroid):
-  minang=180
+  
+def BringToTop(Arr,Index): # If Portion = 1  : Full rotation
+  temp0=Arr[:Index,:] 
+  temp1=Arr[Index:,:]
+  Arr=np.concatenate((temp1,temp0),axis=0)
+  return Arr 
+
+def Centroid(Arr):      
+   Cx=np.sum(Arr[:,0])/len(Arr[:,0])
+   Cy=np.sum(Arr[:,1])/len(Arr[:,1])   
+   Cent=np.array([Cx,Cy])
+   return Cent
+
+def AdjustStartingPoint(Arr,TargetAngle):
+  Cent=Centroid(Arr)
+  minang=180.0
   minind=0
-  i=0
-  for point in Arr:
-    v=point-Centroid
+  
+  for i,point in enumerate(Arr):
+    v=point-Cent
     vlen=np.linalg.norm(v)
     vu=v/vlen
-    th=m.atan2(vu[0],vu[1])
+    th=m.degrees(m.atan2(vu[0],vu[1]))
     if abs(TargetAngle-th)<minang:
       minang=abs(TargetAngle-th)
       minind=i
-    i+=1
-  print(float(minind)/float(len(Arr)))  
+    
   return BringToTop(Arr,minind) 
 
 def MatchArrays(Arr1,Arr2):
@@ -81,11 +95,416 @@ def RotateArray(Arr,Portion): # If Portion = 1  : Full rotation
       Arr=np.delete(Arr,-1,0) 
   return Arr 
 
-def BringToTop(Arr,Index): # If Portion = 1  : Full rotation
-  for i in range(Index+1):
-      Arr=np.insert(Arr,-1,Arr[0],0)
-      Arr=np.delete(Arr,0,0) 
-  return Arr 
+def CheckClockwise(Arr):
+   P0=Arr[0]
+   P1=Arr[len(Arr)//4]
+   C=Centroid(Arr)
+   p0=XYZ(P0[0],P0[1],0.0)
+   p1=XYZ(P1[0],P1[1],0.0)
+   c=XYZ(C[0],C[1],0.0)
+   v0=p0-c
+   v1=p1-c
+   out=CrossProduct(v0,v1)
+   if out.z>0.0:
+      return True
+   elif out.z<0.0:
+      return False
+   else:
+      print 'Colinear vectors!'
+      return None
+
+   
+
+class Yarns: # This class, after initialisation, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
+
+   def __init__(self,Index):
+      self.Index=Index
+      self.Type=None
+      self.Sections={} #Each yarn has a section list assigned to it. 
+      self.Nodes=MasterNode(0,None,None,None,None) # Empty node class
+      self.Length=0
+      self.left=None
+      self.right=None
+
+
+   def InsertSection(self,Index,Section): #Recursive method which adds data to corresponding yarn and section 
+
+      if isinstance(self.Index, int):
+         
+         if Index<self.Index:
+
+           if self.left is None:
+              self.left=Yarns(Index)              
+              self.left.Sections[Section.Index]=Section
+              #print 'Left insert:'+str(Index)
+           else:
+              self.left.InsertSection(Index,Section)
+
+         elif Index>self.Index:
+
+           if self.right is None:
+              self.right=Yarns(Index)
+              self.right.Sections[Section.Index]=Section
+              #print 'Right insert:'+str(Index)
+           else:
+              self.right.InsertSection(Index,Section)
+
+         elif Index==self.Index:
+
+           try:
+             #print 'New Insert'
+             self.Sections[Section.Index].Insert(Section)             
+           except KeyError:
+             self.Sections[Section.Index]=Section  
+                   
+           for S in self.Sections:
+
+              if self.Sections[S].CountNodes(0)>1:
+                  Min=self.Sections[S].FindMin()
+                  Max=self.Sections[S].FindMax()
+                  #print Min,Max             
+                  self.Sections[S].UpdatePositions(Min.Slice,Max.Slice)
+
+      elif self.Index==None:
+         self.Index=Index
+         try:
+           self.Sections[Section.Index].Insert(Section)
+         except KeyError:
+           self.Sections[Section.Index]=Section
+
+   def AddMasterNodes(self,DS): # Called after data insertion is finalised
+
+      if self.left:
+        self.left.AddMasterNodes(DS)
+
+      for S in self.Sections:
+         MaxS=self.Sections[S].FindMax()
+         MinS=self.Sections[S].FindMin()
+         m0x=np.sum(MinS.Polygon[:,0])/len(MinS.Polygon[:,0])
+         m0y=np.sum(MinS.Polygon[:,1])/len(MinS.Polygon[:,1])
+         m1x=np.sum(MaxS.Polygon[:,0])/len(MaxS.Polygon[:,0])
+         m1y=np.sum(MaxS.Polygon[:,1])/len(MaxS.Polygon[:,1])
+         mx=(m0x+m1x)/2
+         my=(m0y+m1y)/2
+         if self.Sections[S].Direction in ['X','x']:
+            self.Type='Warp'
+            m0=np.array([MinS.Slice,mx,my])
+            m1=np.array([MaxS.Slice,mx,my])
+            t=np.array([1.0,0.0,0.0])
+            up=np.array([0.0,0.0,1.0])
+            M0=MasterNode(0,m0,0.0,t,up)
+            M1=MasterNode(1,m1,0.0,t,up)    
+         elif self.Sections[S].Direction in ['Y','y']:
+            self.Type='Weft'
+            m0=np.array([mx,MinS.Slice,my])
+            m1=np.array([mx,MaxS.Slice,my])
+            t=np.array([0.0,1.0,0.0])
+            up=np.array([0.0,0.0,1.0])
+            M0=MasterNode(0,m0,0.0,t,up)
+            M1=MasterNode(1,m1,0.0,t,up)
+         elif self.Sections[S].Direction in ['Z','z']:
+            self.Type='Binder'
+            if self.Sections[S].Sign:
+               if S<0:
+                 x=m1x
+                 y=m1y
+               else:
+                 x=m0x
+                 y=m0y                    
+               m0=np.array([x,y,MinS.Slice])
+               m1=np.array([x,y,MaxS.Slice])
+               t=np.array([0.0,0.0,1.0])              
+               up=np.array([0.0,-1.0,0.0])                 
+               M0=MasterNode(0,m0,0.0,t,up)
+               M1=MasterNode(1,m1,0.0,t,up) 
+            else:
+               if S<0:
+                 x=m1x
+                 y=m1y
+               else:
+                 x=m0x
+                 y=m0y                      
+               m0=np.array([x,y,DS[2]-MinS.Slice])
+               m1=np.array([x,y,DS[2]-MaxS.Slice])              
+               t=np.array([0.0,0.0,-1.0])              
+               up=np.array([0.0,-1.0,0.0])              
+               M1=MasterNode(0,m1,0.0,t,up)
+               M0=MasterNode(1,m0,0.0,t,up)                                
+         else :
+            print 'No direction specified for Section:'+str(self.Sections[S].Index)  
+         # Rotates polygon point order to match the previous polygon -  not great
+         #if S==0:
+         #   self.Sections[S].MatchPolygons(MinS.Polygon)
+         #else:
+         #   self.Sections[S].MatchPolygons(self.Sections[S-1].FindMax().Polygon)
+         M0.Index=2*S
+         M1.Index=2*S+1 
+        #print(M0.Position, M1.Position)
+         self.Nodes.Insert(M0)
+         self.Nodes.Insert(M1)
+         #print 'In yarn: '+str(self.Index)+' and section: '+str(S)+' nodes: '+str(2*S)+','+str(2*S+1)
+      # Fix duplicate node issue
+      Nodes=self.Nodes
+      NodeList=Nodes.GetList([])
+
+      for i in range(Nodes.CountNodes()-1):
+         self.Length+=NodeDistance(NodeList[i],NodeList[i+1])
+      SecInd=sorted([i for i in self.Sections])
+      #print self.Length
+      if len(self.Sections)>1:
+         PreLength=0.000 
+         for i in range(len(self.Sections)):
+           #print(NodeList[2*i].Index,NodeList[2*i+1].Index)
+           SecLength=NodeDistance(NodeList[2*i],NodeList[2*i+1])
+           self.Sections[SecInd[i]].UpdateGlobalPositions(self.Length,PreLength,SecLength)
+           try:
+             PreLength+=SecLength+NodeDistance(NodeList[2*i+1],NodeList[2*i+2])
+           except IndexError:
+             pass  
+
+      if self.right:
+        self.right.AddMasterNodes(DS)
+
+   def ExtractSections(self,Index): 
+
+     if isinstance(self.Index, int):
+       if Index<self.Index:
+          if self.left is None:
+             return 'Yarn'+str(Index)+'Not Found'
+          return self.left.ExtractSection(Index)
+       elif Index>self.Index:
+          if self.right is None:
+             return 'Yarn'+str(Index)+'Not Found'
+          return self.right.ExtractSection(Index)
+       else:
+          return self.Sections
+
+   def PrintYarnTree(self):
+
+      if self.left:
+        self.left.PrintYarnTree()
+      print(self.Index)
+      if self.right:
+        self.right.PrintYarnTree()
+
+   def ExtractYarns(self,EmptyDict={}):
+     if self.left:
+       self.left.ExtractYarns(EmptyDict) 
+     EmptyDict[self.Index]=self  
+     if self.right:
+       self.right.ExtractYarns(EmptyDict)    
+     return EmptyDict
+
+   def CountSlices(self,Count=0):
+
+     if self.left:
+        self.left.CountSlices(Count)
+ 
+     for sec in self.Sections:
+        Count=self.Sections[sec].CountNodes(Count)
+ 
+     if self.right:
+        self.right.CountSlices(Count)
+     
+     return Count
+ 
+class Section: #Data binary tree for signle direction section sequence - recursive method
+
+  def __init__(self,Index,Slice,Polygon,Direction,Sign):
+
+    self.Index=Index
+    self.Slice=Slice
+    self.Direction=Direction
+    self.d=0.0
+    self.Polygon=Polygon
+    self.Sign=Sign
+    if self.Slice:
+       CentrePos=np.sum(Polygon,0)/len(Polygon[:,0])
+       if Direction in ['X','x']:
+          Position=np.array([Slice,CentrePos[0],CentrePos[1]])
+          self.SlaveNode=SlaveNode(Position)
+       elif Direction in ['Y','y']:
+          Position=np.array([CentrePos[0],Slice,CentrePos[1]])
+          self.SlaveNode=SlaveNode(Position)        
+       elif Direction in ['Z','z']:   
+          Position=np.array([CentrePos[0],CentrePos[1],Slice])
+          self.SlaveNode=SlaveNode(Position)   
+    else:
+       self.SlaveNode=None     
+       
+    self.left=None
+    self.right=None
+    
+  def Insert(self,Section): #New node in section tree
+
+    if isinstance(self.Slice,float or int):
+         if self.Slice>Section.Slice: 
+
+           if self.left==None:
+              self.left=Section
+           else:
+              self.left.Insert(Section)
+
+         elif self.Slice<Section.Slice:
+
+           if self.right==None:
+              self.right=Section
+           else:
+              self.right.Insert(Section)
+
+         elif self.Slice==Section.Slice:
+           print('Polygon updated for slice:'+str(Section.Slice)+' in Yarn:'+str(Section.Index))
+           self.Polygon=Section.Polygon
+
+    elif self.Slice==None:  
+      self=Section
+
+  def UpdatePositions(self,Min,Max):
+
+    if isinstance(self.Slice,float or int):
+      if self.left:
+        self.left.UpdatePositions(Min,Max) 
+      self.d=float((self.Slice-Min))/float((Max-Min))
+      if self.right:
+        self.right.UpdatePositions(Min,Max)
+
+  def UpdateGlobalPositions(self,YarnLength,PreLength,SecLength): # For entire path
+   
+    if self.left:
+      self.left.UpdateGlobalPositions(YarnLength,PreLength,SecLength) 
+    self.d=(float(PreLength+SecLength)*float(self.d))/float(YarnLength)
+    if self.right:
+      self.right.UpdateGlobalPositions(YarnLength,PreLength,SecLength)    
+  
+  def MatchPolygons(self,PreviousPolygon): 
+    if self.left:
+       self.left.MatchPolygons(self.Polygon)
+    self.Polygon=MatchArrays(PreviousPolygon,self.Polygon) 
+    if self.right:
+       self.right.MatchPolygons(self.Polygon)    
+ 
+  def FindMax(self):
+   if isinstance(self.Slice, float or int):
+       if self.right: 
+          return self.right.FindMax()
+       return self
+
+  def FindMin(self):
+   if isinstance(self.Slice,float or int):
+       if self.left: 
+          return self.left.FindMin() 
+       return self
+
+  def CountNodes(self,Count=0):
+     if self.left:
+       Count=self.left.CountNodes(Count)
+     Count+=1  
+     if self.right:
+       Count=self.right.CountNodes(Count)
+     return  Count
+    
+  def TreeToDictionary(self,EmptyDict={}):
+     if self.left:
+       EmptyDict=self.left.TreeToDictionary(EmptyDict)
+
+     EmptyDict[self.Slice]=self  
+
+     if self.right:
+       EmptyDict=self.right.TreeToDictionary(EmptyDict)
+     return  EmptyDict
+
+  def PrintTree(self):
+     if self.left:
+       self.left.PrintTree()
+     print(self.Slice)
+     if self.right:
+       self.right.PrintTree()  
+
+class MasterNode:
+
+  def __init__(self,Index,Position,Angle,Tangent,Up):
+    self.Index=Index
+    self.Position=Position
+    self.Angle=Angle
+    self.Tangent=Tangent
+    self.Up=Up
+    self.right=None
+    self.left=None
+
+  def Insert(self,Node):
+
+    if isinstance(self.Index, int):
+       
+        if self.Index>Node.Index: 
+
+           if self.left==None:
+              self.left=Node
+              #print str(self.Index)+' assign left node '+str(Node.Index)
+           else:
+              self.left.Insert(Node)
+
+        elif self.Index<Node.Index:
+
+           if self.right==None:
+              self.right=Node
+              #print str(self.Index)+' assign right node '+str(Node.Index)
+           else:
+              self.right.Insert(Node)
+
+        elif self.Index==Node.Index:
+           self.Position=Node.Position
+           self.Angle=Node.Angle
+           self.Tangent=Node.Tangent
+           self.Up=Node.Up
+           #print str(self.Index)+' replace node '+str(Node.Index)
+    else:
+
+        self=Node
+
+  def GetList(self,Empty=[]):
+
+     if self.left:
+        Empty=self.left.GetList(Empty)
+     
+     Empty.append(self)  
+     
+     if self.right:
+        Empty=self.right.GetList(Empty)    
+     
+     return Empty
+
+  def Find(self,ind):
+
+    if ind<self.Index:
+      if self.left is None:
+          return str(ind)+' Not Found'
+      return self.left.Find(ind)
+    elif ind>self.Index:
+       if self.right is None:
+          return str(ind)+' Not Found'
+       return self.right.Find(ind)
+    elif ind==self.Index:
+       return self
+  
+  def CountNodes(self,Count=0):
+     if self.left:
+       Count=self.left.CountNodes(Count)
+     Count+=1  
+     if self.right:
+       Count=self.right.CountNodes(Count)
+     return  Count
+
+  def PrintTree(self):
+    if self.left:
+      self.left.PrintTree()
+    print(self.Index)
+    if self.right:
+      self.right.PrintTree()
+
+class SlaveNode:
+  def __init__(self,Position):
+    self.Position=Position
+
 def CheckX(V):
   Xunit=XYZ(1.0,0.0,0.0)
   Yunit=XYZ(0.0,1.0,0.0)
@@ -354,7 +773,7 @@ def BuildControlPoints(Textile,InPlaneNumWeft,InPlaneNumWarp):
    # Top Layer Control Points
    #Control_Points=[[[None for i in range(InPlaneNumWeft-1)] for j in range(InPlaneNumWarp)] for k in range(3)]
    Control_Points_Vec=XYZVector()
-   times=0
+
    for weft in TopWeft:
       for warp in UpperWarp:
          Point1=Find2DIntersection(weft,warp,window)
@@ -409,8 +828,6 @@ def PlotScatterProj2D(X,Y,Htitle,Vtitle,Title):
    return 0
 
 def PlotScatter3D(Vector,ax1,colour):
-   #fig1=plt.figure() 
-   #ax1=fig1.add_subplot(111,projection='3d')
 
    X=[p.x for p in Vector]
    Y=[p.y for p in Vector]
@@ -420,8 +837,8 @@ def PlotScatter3D(Vector,ax1,colour):
    ax1.set_ylabel('Y',fontsize=14,fontweight='bold')
    ax1.set_zlabel('Z',fontsize=14,fontweight='bold')
    #ax1.set_title('Control Points',fontsize=18,fontweight='bold') 
-   #plt.show()
-   return 0
+
+   return ax1
 def Red(len_ratio):
    if len_ratio>0.5:
       return len_ratio
@@ -437,17 +854,40 @@ def Green(len_ratio):
       return 2.0-2.0*len_ratio
    else:
       return 2.0*len_ratio                 
-def PlotVectorField3D(Vector1,Vector2,ax1):
-   #fig1=plt.figure() 
-   #ax1=fig1.add_subplot(111,projection='3d')
+
+def PlotElementSortScatter(mesh,fig1,ax1):
+   numofel=len(mesh)
+   CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.1,1.0,numofel)]
+   for i,e in enumerate(mesh):
+      PlotScatter3D(e.DataPoints,ax1,CoMap[i])
+   ax1.set_xlim(0.5,8.5)
+   ax1.set_ylim(0.5,8.5)
+   ax1.set_zlim(0.0,8)
+   ax1.set_aspect('auto',adjustable=None)
+   ax1.set_axis_off()
+   norm=mpl.colors.Normalize(vmin=0,vmax=int(numofel))
+   cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')     
+   SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+   SM.set_array([])
+   fig1.colorbar(SM, label='Element')    
+   return fig1,ax1
+
+def PlotVectorField3D(OriginalMesh,OrthoMesh,fig1,ax1):
+   numofel=len(OriginalMesh)
+   InPoints=XYZVector()
+   OutPoints=XYZVector()  
+   for i in range(numofel):
+       for j in range(len(OriginalMesh[i].DataPoints)):
+          InPoints.push_back(OriginalMesh[i].DataPoints[j])
+          OutPoints.push_back(OrthoMesh[i].DataPoints[j]) 
+
+   X1=np.array([p.x for p in InPoints])
+   Y1=np.array([p.y for p in InPoints])
+   Z1=np.array([p.z for p in InPoints])
    
-   X1=np.array([p.x for p in Vector1])
-   Y1=np.array([p.y for p in Vector1])
-   Z1=np.array([p.z for p in Vector1])
-   
-   X2=np.array([p.x for p in Vector2])
-   Y2=np.array([p.y for p in Vector2])
-   Z2=np.array([p.z for p in Vector2])
+   X2=np.array([p.x for p in OutPoints])
+   Y2=np.array([p.y for p in OutPoints])
+   Z2=np.array([p.z for p in OutPoints])
    Lens=np.sqrt(np.power(X2-X1,2)+np.power(Y2-Y1,2)+np.power(Z2-Z1,2))
    max_len=Lens.max()
    min_len=Lens.min()
@@ -457,15 +897,24 @@ def PlotVectorField3D(Vector1,Vector2,ax1):
    for c in ColourMap:
       ArrHeadCMap.append(c)
       ArrHeadCMap.append(c)
-
    ax1.quiver(X1,Y1,Z1,X2-X1,Y2-Y1,Z2-Z1, normalize=False, colors=ColourMap+ArrHeadCMap)
- 
+   ax1.set_xlim(0.5,8.5)
+   ax1.set_ylim(0.5,8.5)
+   ax1.set_zlim(0.0,8)
    ax1.set_xlabel('X',fontsize=18, fontweight='bold')
    ax1.set_ylabel('Y',fontsize=18, fontweight='bold')
    ax1.set_zlabel('Z',fontsize=18, fontweight='bold')
-   #ax1.set_title('Control Points',fontsize=20)    
- 
-   return min_len,max_len
+   ax1.set_title('Displacement Field',fontsize=20)    
+   ax1.set_aspect('auto',adjustable=None)
+   CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.0,1.0,20)]
+   norm=mpl.colors.Normalize(vmin=min_len,vmax=max_len)
+   cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')
+   SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+   SM.set_array([])
+   CoBar=fig1.colorbar(SM)
+   CoBar.set_label(label='Displacement [mm]',size=16,weight='bold') 
+
+   return fig1,ax1
 
 def PlotProjectedCentroids(Textile):
    Warp, Weft, Binder = YarnTypeSort(Textile)
@@ -728,412 +1177,15 @@ def Assign8thDomain(Textile): #under construction
    
    return Textile
 
-class Yarns: # This class, after initialisation, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
-
-   def __init__(self,Index):
-      self.Index=Index
-      self.Type=None
-      self.Sections={} #Each yarn has a section list assigned to it. 
-      self.Nodes=MasterNode(0,None,None,None,None) # Empty node class
-      self.Length=0
-      self.left=None
-      self.right=None
-
-
-   def InsertSection(self,Index,Section): #Recursive method which adds data to corresponding yarn and section 
-
-      if isinstance(self.Index, int):
-         
-         if Index<self.Index:
-
-           if self.left is None:
-              self.left=Yarns(Index)              
-              self.left.Sections[Section.Index]=Section
-              #print 'Left insert:'+str(Index)
-           else:
-              self.left.InsertSection(Index,Section)
-
-         elif Index>self.Index:
-
-           if self.right is None:
-              self.right=Yarns(Index)
-              self.right.Sections[Section.Index]=Section
-              #print 'Right insert:'+str(Index)
-           else:
-              self.right.InsertSection(Index,Section)
-
-         elif Index==self.Index:
-
-           try:
-             #print 'New Insert'
-             self.Sections[Section.Index].Insert(Section)             
-           except KeyError:
-             self.Sections[Section.Index]=Section  
-                   
-           for S in self.Sections:
-
-              if self.Sections[S].CountNodes(0)>1:
-                  Min=self.Sections[S].FindMin()
-                  Max=self.Sections[S].FindMax()
-                  #print Min,Max             
-                  self.Sections[S].UpdatePositions(Min.Slice,Max.Slice)
-
-      elif self.Index==None:
-         self.Index=Index
-         try:
-           self.Sections[Section.Index].Insert(Section)
-         except KeyError:
-           self.Sections[Section.Index]=Section
-
-   def AddMasterNodes(self): # Called after data insertion is finalised
-
-      if self.left:
-        self.left.AddMasterNodes()
-
-      for S in self.Sections:
-         MaxS=self.Sections[S].FindMax()
-         MinS=self.Sections[S].FindMin()
-         m0x=np.sum(MinS.Polygon[:,0])/len(MinS.Polygon[:,0])
-         m0y=np.sum(MinS.Polygon[:,1])/len(MinS.Polygon[:,1])
-         m1x=np.sum(MaxS.Polygon[:,0])/len(MaxS.Polygon[:,0])
-         m1y=np.sum(MaxS.Polygon[:,1])/len(MaxS.Polygon[:,1])
-         mx=(m0x+m1x)/2
-         my=(m0y+m1y)/2
-         if self.Sections[S].Direction in ['X','x']:
-            self.Type='Warp'
-            m0=np.array([MinS.Slice,mx,my])
-            m1=np.array([MaxS.Slice,mx,my])
-            t=np.array([1.0,0.0,0.0])
-            up=np.array([0.0,0.0,1.0])
-            M0=MasterNode(0,m0,0.0,t,up)
-            M1=MasterNode(1,m1,0.0,t,up)    
-         elif self.Sections[S].Direction in ['Y','y']:
-            self.Type='Weft'
-            m0=np.array([mx,MinS.Slice,my])
-            m1=np.array([mx,MaxS.Slice,my])
-            t=np.array([0.0,1.0,0.0])
-            up=np.array([0.0,0.0,1.0])
-            M0=MasterNode(0,m0,0.0,t,up)
-            M1=MasterNode(1,m1,0.0,t,up)
-         elif self.Sections[S].Direction in ['Z','z']:
-            self.Type='Binder'
-            if self.Sections[S].Sign:
-               if S<0:
-                 x=m1x
-                 y=m1y
-               else:
-                 x=m0x
-                 y=m0y                    
-               m0=np.array([x,y,MinS.Slice])
-               m1=np.array([x,y,MaxS.Slice])
-               t=np.array([0.0,0.0,1.0])              
-               up=np.array([0.0,-1.0,0.0])                 
-               M0=MasterNode(0,m0,0.0,t,up)
-               M1=MasterNode(1,m1,0.0,t,up) 
-            else:
-               if S<0:
-                 x=m1x
-                 y=m1y
-               else:
-                 x=m0x
-                 y=m0y 
-                               
-               m0=np.array([x,y,DS[2]-MinS.Slice])
-               m1=np.array([x,y,DS[2]-MaxS.Slice])              
-               t=np.array([0.0,0.0,-1.0])              
-               up=np.array([0.0,-1.0,0.0])              
-               M1=MasterNode(0,m1,0.0,t,up)
-               M0=MasterNode(1,m0,0.0,t,up)    
-                                         
-         else :
-            print 'No direction specified for Section:'+str(self.Sections[S].Index)  
-         # Rotates polygon point order to match the previous polygon -  not great
-         #if S==0:
-         #   self.Sections[S].MatchPolygons(MinS.Polygon)
-         #else:
-         #   self.Sections[S].MatchPolygons(self.Sections[S-1].FindMax().Polygon)
-         M0.Index=2*S
-         M1.Index=2*S+1 
-        #print(M0.Position, M1.Position)
-         self.Nodes.Insert(M0)
-         self.Nodes.Insert(M1)
-         #print 'In yarn: '+str(self.Index)+' and section: '+str(S)+' nodes: '+str(2*S)+','+str(2*S+1)
-      # Fix duplicate node issue
-      Nodes=self.Nodes
-      NodeList=Nodes.GetList([])
-
-      for i in range(Nodes.CountNodes()-1):
-         self.Length+=NodeDistance(NodeList[i],NodeList[i+1])
-      SecInd=sorted([i for i in self.Sections])
-      #print self.Length
-      if len(self.Sections)>1:
-         PreLength=0 
-         for i in range(len(self.Sections)):
-           #print(NodeList[2*i].Index,NodeList[2*i+1].Index)
-           SecLength=NodeDistance(NodeList[2*i],NodeList[2*i+1])
-           self.Sections[SecInd[i]].UpdateGlobalPositions(self.Length,PreLength,SecLength)
-           try:
-             PreLength+=SecLength+NodeDistance(NodeList[2*i+1],NodeList[2*i+2])
-           except IndexError:
-             pass  
-
-      if self.right:
-        self.right.AddMasterNodes()
-
-   def ExtractSections(self,Index): 
-
-     if isinstance(self.Index, int):
-       if Index<self.Index:
-          if self.left is None:
-             return 'Yarn'+str(Index)+'Not Found'
-          return self.left.ExtractSection(Index)
-       elif Index>self.Index:
-          if self.right is None:
-             return 'Yarn'+str(Index)+'Not Found'
-          return self.right.ExtractSection(Index)
-       else:
-          return self.Sections
-
-   def PrintYarnTree(self):
-
-      if self.left:
-        self.left.PrintYarnTree()
-      print(self.Index)
-      if self.right:
-        self.right.PrintYarnTree()
-
-   def ExtractYarns(self,EmptyDict={}):
-     if self.left:
-       self.left.ExtractYarns(EmptyDict) 
-     EmptyDict[self.Index]=self  
-     if self.right:
-       self.right.ExtractYarns(EmptyDict)    
-     return EmptyDict
-
-   def CountSlices(self,Count=0):
-
-     if self.left:
-        self.left.CountSlices(Count)
- 
-     for sec in self.Sections:
-        Count=self.Sections[sec].CountNodes(Count)
- 
-     if self.right:
-        self.right.CountSlices(Count)
-     
-     return Count
- 
-class Section: #Data binary tree for signle direction section sequence - recursive method
-
-  def __init__(self,Index,Slice,Polygon,Direction,Sign):
-
-    self.Index=Index
-    self.Slice=Slice
-    self.Direction=Direction
-    self.d=0.0
-    self.Polygon=Polygon
-    self.Sign=Sign
-    if self.Slice:
-       CentrePos=np.sum(Polygon,0)/len(Polygon[:,0])
-       if Direction in ['X','x']:
-          Position=np.array([Slice,CentrePos[0],CentrePos[1]])
-          self.SlaveNode=SlaveNode(Position)
-       elif Direction in ['Y','y']:
-          Position=np.array([CentrePos[0],Slice,CentrePos[1]])
-          self.SlaveNode=SlaveNode(Position)        
-       elif Direction in ['Z','z']:   
-          Position=np.array([CentrePos[0],CentrePos[1],Slice])
-          self.SlaveNode=SlaveNode(Position)   
-    else:
-       self.SlaveNode=None     
-       
-    self.left=None
-    self.right=None
-    
-  def Insert(self,Section): #New node in section tree
-
-    if isinstance(self.Slice,float or int):
-         if self.Slice>Section.Slice: 
-
-           if self.left==None:
-              self.left=Section
-           else:
-              self.left.Insert(Section)
-
-         elif self.Slice<Section.Slice:
-
-           if self.right==None:
-              self.right=Section
-           else:
-              self.right.Insert(Section)
-
-         elif self.Slice==Section.Slice:
-           print('Polygon updated for slice:'+str(Section.Slice)+' in Yarn:'+str(Section.Index))
-           self.Polygon=Section.Polygon
-
-    elif self.Slice==None:  
-      self=Section
-
-
-  def UpdatePositions(self,Min,Max):
-
-    if isinstance(self.Slice,float or int):
-      if self.left:
-        self.left.UpdatePositions(Min,Max) 
-      self.d=float((self.Slice-Min))/float((Max-Min))
-      if self.right:
-        self.right.UpdatePositions(Min,Max)
-
-  def UpdateGlobalPositions(self,YarnLength,PreLength,SecLength): # For entire path
-   
-    if self.left:
-      self.left.UpdateGlobalPositions(YarnLength,PreLength,SecLength) 
-    self.d=(PreLength+SecLength*self.d)/YarnLength
-    if self.right:
-      self.right.UpdateGlobalPositions(YarnLength,PreLength,SecLength)    
-  
-  def MatchPolygons(self,PreviousPolygon): 
-    if self.left:
-       self.left.MatchPolygons(self.Polygon)
-    self.Polygon=MatchArrays(PreviousPolygon,self.Polygon) 
-    if self.right:
-       self.right.MatchPolygons(self.Polygon)    
- 
-  def FindMax(self):
-   if isinstance(self.Slice, float or int):
-       if self.right: 
-          return self.right.FindMax()
-       return self
-
-  def FindMin(self):
-   if isinstance(self.Slice,float or int):
-       if self.left: 
-          return self.left.FindMin() 
-       return self
-
-  def CountNodes(self,Count=0):
-     if self.left:
-       Count=self.left.CountNodes(Count)
-     Count+=1  
-     if self.right:
-       Count=self.right.CountNodes(Count)
-     return  Count
-    
-  def TreeToDictionary(self,EmptyDict={}):
-     if self.left:
-       EmptyDict=self.left.TreeToDictionary(EmptyDict)
-
-     EmptyDict[self.d]=self  
-
-     if self.right:
-       EmptyDict=self.right.TreeToDictionary(EmptyDict)
-     return  EmptyDict
-
-  def PrintTree(self):
-     if self.left:
-       self.left.PrintTree()
-     print(self.Slice)
-     if self.right:
-       self.right.PrintTree()  
-
-class MasterNode:
-
-  def __init__(self,Index,Position,Angle,Tangent,Up):
-    self.Index=Index
-    self.Position=Position
-    self.Angle=Angle
-    self.Tangent=Tangent
-    self.Up=Up
-    self.right=None
-    self.left=None
-
-  def Insert(self,Node):
-
-    if isinstance(self.Index, int):
-       
-        if self.Index>Node.Index: 
-
-           if self.left==None:
-              self.left=Node
-              #print str(self.Index)+' assign left node '+str(Node.Index)
-           else:
-              self.left.Insert(Node)
-
-        elif self.Index<Node.Index:
-
-           if self.right==None:
-              self.right=Node
-              #print str(self.Index)+' assign right node '+str(Node.Index)
-           else:
-              self.right.Insert(Node)
-
-        elif self.Index==Node.Index:
-           self.Position=Node.Position
-           self.Angle=Node.Angle
-           self.Tangent=Node.Tangent
-           self.Up=Node.Up
-           #print str(self.Index)+' replace node '+str(Node.Index)
-    else:
-
-        self=Node
-
-  def GetList(self,Empty=[]):
-
-     if self.left:
-        Empty=self.left.GetList(Empty)
-     
-     Empty.append(self)  
-     
-     if self.right:
-        Empty=self.right.GetList(Empty)    
-     
-     return Empty
-
-  def Find(self,ind):
-
-    if ind<self.Index:
-      if self.left is None:
-          return str(ind)+' Not Found'
-      return self.left.Find(ind)
-    elif ind>self.Index:
-       if self.right is None:
-          return str(ind)+' Not Found'
-       return self.right.Find(ind)
-    elif ind==self.Index:
-       return self
-  
-  def CountNodes(self,Count=0):
-     if self.left:
-       Count=self.left.CountNodes(Count)
-     Count+=1  
-     if self.right:
-       Count=self.right.CountNodes(Count)
-     return  Count
-
-  def PrintTree(self):
-    if self.left:
-      self.left.PrintTree()
-    print(self.Index)
-    if self.right:
-      self.right.PrintTree()
-
-class SlaveNode:
-  def __init__(self,Position):
-    self.Position=Position
-
-
-if __name__=='__main__':
+def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlotParameters):
   #Get in the appropriate VF folder 
-  cwdvf=cwd+'\\VF55'
-  os.chdir(cwdvf)
-  
+
   #Get data for window size and resolution:
   
-  WinSize=np.genfromtxt('window_size.txt')
-  file=open('pixel_size.txt','r')
-  ImgRes=file.read() #mm
-  file.close()
-  ImgRes=float(ImgRes)
+  WinSize=FieldOfViewData['WindowSize']
+  ImgRes=FieldOfViewData['ImageResolution']
+
+
   #Define domain
   DS=WinSize*np.array([1.0,1.0,1.0])*ImgRes
   P0=np.array([0.0,0.0,0.0])
@@ -1141,22 +1193,49 @@ if __name__=='__main__':
   CP1=XYZ(P0[0],P0[1],P0[2])
   CDomain=CDomainPlanes(CP1,CP2) # TexGen domain class
   #Polygon Data folder:
-  DatFold='\\Data8'
-  os.chdir(cwdvf+DatFold)
+
   # Store Files:
-  FileList=[(f.replace('.dat','')).split('_') for f in listdir(cwdvf+DatFold)] # list of info from names
-  FileNames=[f for f in listdir(cwdvf+DatFold)] # full names
+  FileList=[(f.replace('.dat','')).split('_') for f in listdir(DataLocation)] # list of info from names
+  FileNames=[f for f in listdir(DataLocation)] # full names
   # Initialise auxiliary class: 
-  MyYarns=Yarns(0)
-  i=0
-  for file in FileList:
+  MyYarns=Yarns(None) # Index must be null - if is integer the tree node node will be left unpopulated
+  
+  if GlobalFlips['x']:
+     cx=-1.0
+     ox=DS[0]
+  else:
+     cx=1.0
+     ox=0.0
+
+  if GlobalFlips['y']:
+     cy=-1.0
+     oy=DS[1]
+  else:
+     cy=1.0
+     oy=0.0
+
+  if GlobalFlips['z']:
+     cz=-1.0
+     oz=DS[2]
+  else:
+     cz=1.0
+     oz=0.0    
+
+  for i,file in enumerate(FileList):   
+
     # File name structure : Direction_YarnIndex_Index_Slice ex. : X_2_1_230 + _-1 depending on the partition sequence. 
     Direction=file[0]
     YarnIndex=int(file[1])
     Index=int(file[2])
     Slice=int(file[3])*ImgRes
     Sign=None
-    Polygon=np.genfromtxt(cwdvf+DatFold+'\\'+FileNames[i])*ImgRes
+    Polygon=np.genfromtxt(DataLocation+'\\'+FileNames[i])*ImgRes
+    clock=CheckClockwise(Polygon)
+    if clock:
+       #Clock wise polygon point order causes hollow rendering
+       Polygon=Polygon[::-1]
+    #Polygon=AdjustStartingPoint(Polygon,45.0)
+    #print(Polygon)
     #Polygon=RotateArray(Polygon,0.5)
     if Direction in ['Z','z']:
        try: 
@@ -1165,23 +1244,38 @@ if __name__=='__main__':
        except IndexError:
           #Slice=DS[2]-Slice
           pass
-       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0, DS[1]]) #DS[1]])#([DS[0],DS[1]])
+       Polygon=Polygon*np.array([cx, cy])+np.array([ox, oy]) #DS[1]])#([DS[0],DS[1]])
     elif Direction in ['X','x']:
        #Slice=DS[0]-Slice
-       Polygon=Polygon*np.array([-1.0,-1.0])+np.array([DS[1],DS[2]])
+       Polygon=Polygon*np.array([cy,cz])+np.array([oy,oz])
     elif Direction in ['Y','y']:
-       Polygon=Polygon*np.array([1.0,-1.0])+np.array([0.0,DS[2]])#DS[2]])             
+       Polygon=Polygon*np.array([cx,cz])+np.array([ox,oz])#DS[2]])             
     #Populate trees   
     MySection=Section(Index,Slice,Polygon,Direction,Sign)
     MyYarns.InsertSection(YarnIndex,MySection)
-    i+=1
+   
   # Add master nodes to join sections and compute final global positions  
   #MyYarns.PrintYarnTree()
   
-  MyYarns.AddMasterNodes()
+  MyYarns.AddMasterNodes(DS)
   
   #######
   # TexGen classes initialisation: 
+  if LocalFlips['x']:
+     lcx=-1.0
+  else:
+     lcx=1.0
+
+  if LocalFlips['y']:
+     lcy=-1.0
+  else:
+     lcy=1.0
+
+  if LocalFlips['z']:
+     lcz=-1.0
+  else:
+     lcz=1.0   
+
   Textile=CTextile()
   Interpolation=CInterpolationBezier(False, False, False)
   
@@ -1210,7 +1304,7 @@ if __name__=='__main__':
 #         NodeList.insert(3*i+2,Nmid)
 ############################# 
 
-    n0y=NodeList[0].Position[1]
+    #n0y=NodeList[0].Position[1]
     NumSlices=MyYarn.CountSlices(0)
     MySections=MyYarn.Sections
     BinderBool=False
@@ -1219,7 +1313,6 @@ if __name__=='__main__':
       BinderBool=True
     CSection=CYarnSectionInterpPosition()
     CNodeList=[CNode(XYZ(n.Position[0],n.Position[1],n.Position[2])) for n in NodeList]
-
     for sec in MySections:
       MySection=MySections[sec]
       Direction=MySection.Direction
@@ -1232,41 +1325,37 @@ if __name__=='__main__':
         CXYVector=XYVector()
         MyPolygon=SectionsDict[s].Polygon
         N=MyNodes.Find(2*sec)
-        
         #Append nodes for translation vector computations:
-        #if BinderBool and sec==0:
-        #   if 
-
         if Direction in ['X','x']:
           MNPos=np.array([N.Position[1],N.Position[2]])
           #MyPolygon=ClosestIndex(MyPolygon,StartAngleX,MNPos)
-          LocPolygon=(MyPolygon-MNPos)*np.array([-1.0,1.0])
-          LocPolygon=LocPolygon[::-1] # Fixes hollow rendering (if needed)
+          LocPolygon=(MyPolygon-MNPos)*np.array([lcy,lcz])
         elif Direction in ['Y','y']:
           MNPos=np.array([N.Position[0],N.Position[2]])
-          LocPolygon=(MyPolygon-MNPos)*np.array([1.0,1.0])   
-          LocPolygon=LocPolygon[::-1]
+          LocPolygon=(MyPolygon-MNPos)*np.array([lcx,lcz])         
         elif Direction in ['Z','z']:
           MNPos=np.array([N.Position[0],N.Position[1]])
           #MyPolygon=BringToTop(MyPolygon,3)
           if Sign:
-             LocPolygon=(MyPolygon-MNPos)*np.array([1.0, -1.0])
+             LocPolygon=(MyPolygon-MNPos)*np.array([lcx, lcy])
+             if clock:#Reverse to match 
+                LocPolygon=LocPolygon[::-1]             
           else:
-             LocPolygon=(MyPolygon-MNPos)*np.array([-1.0, -1.0])
-             LocPolygon=LocPolygon[::-1]
+             LocPolygon=(MyPolygon-MNPos)*np.array([-lcx, lcy])
+
         else:
           print 'Unrecognised direction'   
         #LocPolygon=RotateArray(LocPolygon,0.9)   
         CXYList=[XY(p[0],p[1]) for p in LocPolygon]
         for i in CXYList:
           CXYVector.push_back(i)
-        #d=SectionsDict[s].d
-        CSection.AddSection(s,CSectionPolygon(CXYVector))
+        d=SectionsDict[s].d
+        CSection.AddSection(d,CSectionPolygon(CXYVector))
 
     CYarn0=CYarn()
     CYarn0.AssignSection(CSection)
-    i=0
-    for n in CNodeList:
+
+    for i,n in enumerate(CNodeList):
        CYarn0.AddNode(n)
        n0=CYarn0.GetNode(i)
        Up=NodeList[i].Up
@@ -1278,7 +1367,6 @@ if __name__=='__main__':
          n0.SetUp(CUp)
        except AttributeError:
          pass
-       i+=1
 
     CYarn0.AssignInterpolation(Interpolation)
     # Adjusted resolution depending on yarn type. 
@@ -1287,94 +1375,123 @@ if __name__=='__main__':
     #  CYarn0.SetResolution(int(NumSlices*0.6),50)
     #else:
     #  CYarn0.SetResolution(int(NumSlices*0.8),80) 
-
     if BinderBool:
-      CYarn0.SetResolution(int(NumSlices*0.6),20)
+      CYarn0.SetResolution(int(NumSlices*YarnPlotParameters['BinderRatio']),YarnPlotParameters['BinderSectionPopulation'])
     else:
-      CYarn0.SetResolution(int(NumSlices*0.8),40)
+      CYarn0.SetResolution(int(NumSlices*YarnPlotParameters['Ratio']),YarnPlotParameters['SectionPopulation'])
 
-    Textile.AddYarn(CYarn0)
+    Textile.AddYarn(CYarn0)  
+    Textile.AssignDomain(CDomain)
 
-   
+  return Textile, MyYarnDict
+
+def ImportFromTG3(ModelLocation,ModelName,TexName):
+   ReadFromXML(ModelLocation+'/'+ModelName+'.tg3')
+   Textile=GetTextile(TexName)
+   return Textile
+
+def SaveAsTG3(OutputLocation,ModelName,Textile,TexName):
+   AddTextile(TexName,Textile)
+   SaveToXML(OutputLocation+'\\'+ModelName+'.tg3',"",OUTPUT_STANDARD)
+   return 0
+def SaveAbaqusMesh(gnodes,mesh,OutputLocation,FileName):
+  
+  file=open(OutputLocation+'\\'+FileName+'.inp','w')
+  file.write('*Node\n')
+  for i in gnodes:
+      node=gnodes[i]
+      pos=node.Position
+      file.write(str(i)+', '+str(pos.x)+', '+str(pos.y)+', '+str(pos.z)+'\n')
+  file.write('*Element, Type=C3D8R\n')
+  for el in mesh:
+     string=''
+     for n in el.Connectivity:
+        string+=', '+str(n)
+     file.write(str(el.Index)+string+'\n')
+  file.write('*NSet, NSet=hold, Unsorted\n1\n*Boundary\nhold,1,1\n')
+  file.write('*Step, Name=myStep\n*Static\n*End Step\n')
+  file.close()   
+  ##  
+  return 0
+def MeasurementStatistics(YarnsDict):
+   # Get distributions of number of polygon points per yarn 
+   # and number of profiles per yarn 
+
+   numptsdist=[]
+   numsecsdist=[]
+   #for y in YarnsDict:
+   #   Yarn=YarnsDict[y]
+   #   Sections=Yarn.Sections
+   #   for s in Sections:
+   #      Seq=Sections[s]
+   #      ProfileDict=Seq.TreeToDictionary({})
+   #      profilenum=0
+   #      for p in ProfileDict:
+   #         profile=ProfileDict[p]
+   #         slice=profile.Slice
+   #         numpolygon=len(profile.Polygon)
+   pass         
+   return 0
+
+if __name__=='__main__':
+  #Get in the appropriate VF folder 
+  ModelLocation=cwd+'\\VF64'
+  os.chdir(ModelLocation)
+  
+  DataLocation=ModelLocation+'\\Data2'
+  FieldOfViewData={
+     'WindowSize' : np.genfromtxt('window_size.txt'),
+     'ImageResolution' : np.genfromtxt('pixel_size.txt')
+  }
+  YarnPlotParameters={
+     'Ratio' : 2.0,  # controls the length-wise profiles used to plot the yarn - 1.0 equals to number of profiles measured by user
+     'BinderRatio' : 0.6,
+     'SectionPopulation' : 40,
+     'BinderSectionPopulation' : 25 
+  }
+  GlobalFlips={
+     'x' : False,
+     'y' : True,
+     'z' : True
+  }
+  LocalFlips={
+     'x' : False,
+     'y' : True,
+     'z' : False
+  }
+
+  Textile,YarnsDict=BuildFromData(DataLocation,FieldOfViewData,GlobalFlips,LocalFlips,YarnPlotParameters)
+  SaveAsTG3(ModelLocation,'CT64',Textile,'CT64_0')
   ##
   #NewTex,NewDomain=Extend(Textile,CDomain)
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)
   #NewTex.AssignDomain(CDomain)
   ##
   ##Find control points from TexGen model, build mesh and compute regularised point cloud
-  ControlPts=BuildControlPoints(Textile,4,2)
-  DataPts=GetPointCloud(Textile)
-  mesh,regmesh=cm.BuildMesh(ControlPts,4,2,3)
-  regmesh=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
+  #ControlPts=BuildControlPoints(Textile,4,2)
+  #DataPts=GetPointCloud(Textile)
+  #mesh,regmesh=cm.BuildMesh(ControlPts,4,2,3)
+  #regmesh=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
   ##
+
   
-  #Save Abaqus mesh
-  #os.chdir(cwd)
-  #file=open('TestMesh.inp','w')
-  #file.write('*Node\n')
-  #for i in gnodes:
-  #    node=gnodes[i]
-  #    pos=node.Position
-  #    file.write(str(i)+', '+str(pos.x)+', '+str(pos.y)+', '+str(pos.z)+'\n')
-  #file.write('*Element, Type=C3D8R\n')
-  #for el in mesh:
-  #   string=''
-  #   for n in el.Connectivity:
-  #      string+=', '+str(n)
-  #   file.write(str(el.Index)+string+'\n')
-  #file.write('*NSet, NSet=hold, Unsorted\n1\n*Boundary\nhold,1,1\n')
-  #file.write('*Step, Name=myStep\n*Static\n*End Step\n')
-  #file.close()   
-  ###
-  
-  fig=plt.figure()
-  font={'family':'normal',
-        'weight':'normal',
-        'size'  : 16}
-  plt.rc('font',**font)  
-  ax=fig.add_subplot(111,projection='3d')
-  PlotScatter3D(ControlPts,ax,'black')
+  #fig=plt.figure()
+  #font={'family':'normal',
+  #      'weight':'normal',
+  #      'size'  : 16}
+  #plt.rc('font',**font)  
+  #ax=fig.add_subplot(111,projection='3d')
+  #PlotScatter3D(ControlPts,ax,'black')
   
   #Plot Region : Comment lines according to designated plotting sections
-
-  ###Plot scatter of data points in control mesh
-  numofel=len(mesh)
-  CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.1,1.0,numofel)]
-  for i,e in enumerate(mesh):
-     PlotScatter3D(e.DataPoints,ax,CoMap[i])
-  ax.set_xlim(0.5,8.5)
-  ax.set_ylim(0.5,8.5)
-  ax.set_zlim(0.0,8)
-  ax.set_aspect('auto',adjustable=None)
-  ax.set_axis_off()
-  norm=mpl.colors.Normalize(vmin=0,vmax=int(numofel))
-  cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')     
-  SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
-  SM.set_array([])
-  fig.colorbar(SM, label='Element')  
-  ### end
   
-  ###Plot displacement vector field:
-  #InPoints=XYZVector()
-  #OutPoints=XYZVector()  
-  #for i in range(numofel):
-  #    for j in range(len(regmesh[i].DataPoints)):
-  #       InPoints.push_back(mesh[i].DataPoints[j])
-  #       OutPoints.push_back(regmesh[i].DataPoints[j]) 
-  #minlen,maxlen=PlotVectorField3D(InPoints,OutPoints,ax)
-  #ax.set_xlim(0.5,8.5)
-  #ax.set_ylim(0.5,8.5)
-  #ax.set_zlim(0.0,8)
-  #ax.set_aspect('auto',adjustable=None)
-  #CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.0,1.0,20)]
-  #norm=mpl.colors.Normalize(vmin=minlen,vmax=maxlen)
-  #cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')
-  #SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
-  #SM.set_array([])
-  #CoBar=fig.colorbar(SM)
-  #CoBar.set_label(label='Displacement [mm]',size=16,weight='bold')
-  ###end    
-  plt.show() # Comment accordingly
+  ###Plot scatter of data points in control mesh
+  #PlotElementSortScatter(mesh,fig,ax)
+  ### end
+  ##Displacement vector field
+  #PlotVectorField3D(mesh,regmesh,fig,ax)
+  ##
+  #plt.show() # Comment accordingly
 
   #Finalise and save TG3 file:
   #Textile.AssignDomain(CDomain)
