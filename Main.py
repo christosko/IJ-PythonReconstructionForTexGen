@@ -113,8 +113,6 @@ def CheckClockwise(Arr):
       print 'Colinear vectors!'
       return None
 
-   
-
 class Yarns: # This class, after initialisation, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
 
    def __init__(self,Index):
@@ -364,15 +362,14 @@ class Section: #Data binary tree for signle direction section sequence - recursi
     if isinstance(self.Slice,float or int):
       if self.left:
         self.left.UpdatePositions(Min,Max) 
-      self.d=float((self.Slice-Min))/float((Max-Min))
+      self.d=float(self.Slice-Min)/float(Max-Min)
       if self.right:
         self.right.UpdatePositions(Min,Max)
 
   def UpdateGlobalPositions(self,YarnLength,PreLength,SecLength): # For entire path
-   
     if self.left:
       self.left.UpdateGlobalPositions(YarnLength,PreLength,SecLength) 
-    self.d=(float(PreLength+SecLength)*float(self.d))/float(YarnLength)
+    self.d=float(PreLength+SecLength*float(self.d))/float(YarnLength)
     if self.right:
       self.right.UpdateGlobalPositions(YarnLength,PreLength,SecLength)    
   
@@ -407,7 +404,7 @@ class Section: #Data binary tree for signle direction section sequence - recursi
      if self.left:
        EmptyDict=self.left.TreeToDictionary(EmptyDict)
 
-     EmptyDict[self.Slice]=self  
+     EmptyDict[self.d]=self  
 
      if self.right:
        EmptyDict=self.right.TreeToDictionary(EmptyDict)
@@ -1179,13 +1176,9 @@ def Assign8thDomain(Textile): #under construction
 
 def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlotParameters):
   #Get in the appropriate VF folder 
-
   #Get data for window size and resolution:
-  
   WinSize=FieldOfViewData['WindowSize']
   ImgRes=FieldOfViewData['ImageResolution']
-
-
   #Define domain
   DS=WinSize*np.array([1.0,1.0,1.0])*ImgRes
   P0=np.array([0.0,0.0,0.0])
@@ -1193,7 +1186,6 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
   CP1=XYZ(P0[0],P0[1],P0[2])
   CDomain=CDomainPlanes(CP1,CP2) # TexGen domain class
   #Polygon Data folder:
-
   # Store Files:
   FileList=[(f.replace('.dat','')).split('_') for f in listdir(DataLocation)] # list of info from names
   FileNames=[f for f in listdir(DataLocation)] # full names
@@ -1222,11 +1214,10 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
      oz=0.0    
 
   for i,file in enumerate(FileList):   
-
     # File name structure : Direction_YarnIndex_Index_Slice ex. : X_2_1_230 + _-1 depending on the partition sequence. 
     Direction=file[0]
     YarnIndex=int(file[1])
-    Index=int(file[2])
+    SectionIndex=int(file[2])
     Slice=int(file[3])*ImgRes
     Sign=None
     Polygon=np.genfromtxt(DataLocation+'\\'+FileNames[i])*ImgRes
@@ -1235,30 +1226,23 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
        #Clock wise polygon point order causes hollow rendering
        Polygon=Polygon[::-1]
     #Polygon=AdjustStartingPoint(Polygon,45.0)
-    #print(Polygon)
-    #Polygon=RotateArray(Polygon,0.5)
     if Direction in ['Z','z']:
        try: 
           Sign=int(file[4])
           Slice=DS[2]-Slice #Reversed Z axis
        except IndexError:
-          #Slice=DS[2]-Slice
           pass
-       Polygon=Polygon*np.array([cx, cy])+np.array([ox, oy]) #DS[1]])#([DS[0],DS[1]])
+       Polygon=Polygon*np.array([cx, cy])+np.array([ox, oy]) 
     elif Direction in ['X','x']:
-       #Slice=DS[0]-Slice
        Polygon=Polygon*np.array([cy,cz])+np.array([oy,oz])
     elif Direction in ['Y','y']:
-       Polygon=Polygon*np.array([cx,cz])+np.array([ox,oz])#DS[2]])             
+       Polygon=Polygon*np.array([cx,cz])+np.array([ox,oz])            
     #Populate trees   
-    MySection=Section(Index,Slice,Polygon,Direction,Sign)
+    MySection=Section(SectionIndex,Slice,Polygon,Direction,Sign)
     MyYarns.InsertSection(YarnIndex,MySection)
-   
   # Add master nodes to join sections and compute final global positions  
   #MyYarns.PrintYarnTree()
-  
-  MyYarns.AddMasterNodes(DS)
-  
+  MyYarns.AddMasterNodes(DS) # Populate with master nodes - don't skip
   #######
   # TexGen classes initialisation: 
   if LocalFlips['x']:
@@ -1278,13 +1262,11 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
 
   Textile=CTextile()
   Interpolation=CInterpolationBezier(False, False, False)
-  
   #Traverse auxiliary yarn tree and extract yarns
   MyYarnDict=MyYarns.ExtractYarns()
   #Indices used for binder yarns need to be included in a list
   #This helps with identifying and applying the appropriate resolution 
   BinderIndexList=[]#Initialised and populated with yarns with number of partitions>1
-
   # Iterate yarn class to extact data and populate corresponding TexGen classes
   for y in MyYarnDict:
     MyYarn=MyYarnDict[y]
@@ -1303,8 +1285,6 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
 #         Nmid=MasterNode(3*i+2,NmidPos,0.0,tan_i,up_i)
 #         NodeList.insert(3*i+2,Nmid)
 ############################# 
-
-    #n0y=NodeList[0].Position[1]
     NumSlices=MyYarn.CountSlices(0)
     MySections=MyYarn.Sections
     BinderBool=False
@@ -1316,45 +1296,38 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
     for sec in MySections:
       MySection=MySections[sec]
       Direction=MySection.Direction
-      index=MySection.Index
       SectionsDict=MySection.TreeToDictionary({})
       Sign=MySection.Sign
       #Local coordinate system:
       # - Adjust transformations accordingly to match the global representation
-      for s in SectionsDict:
+      for d in SectionsDict:
         CXYVector=XYVector()
-        MyPolygon=SectionsDict[s].Polygon
+        MyPolygon=SectionsDict[d].Polygon
         N=MyNodes.Find(2*sec)
         #Append nodes for translation vector computations:
         if Direction in ['X','x']:
           MNPos=np.array([N.Position[1],N.Position[2]])
-          #MyPolygon=ClosestIndex(MyPolygon,StartAngleX,MNPos)
           LocPolygon=(MyPolygon-MNPos)*np.array([lcy,lcz])
         elif Direction in ['Y','y']:
           MNPos=np.array([N.Position[0],N.Position[2]])
-          LocPolygon=(MyPolygon-MNPos)*np.array([lcx,lcz])         
+          LocPolygon=(MyPolygon-MNPos)*np.array([lcx,lcz])       
         elif Direction in ['Z','z']:
           MNPos=np.array([N.Position[0],N.Position[1]])
-          #MyPolygon=BringToTop(MyPolygon,3)
           if Sign:
-             LocPolygon=(MyPolygon-MNPos)*np.array([lcx, lcy])
-             if clock:#Reverse to match 
-                LocPolygon=LocPolygon[::-1]             
+             LocPolygon=(MyPolygon-MNPos)*np.array([lcx, lcy])   
+             if clock:
+                LocPolygon=LocPolygon[::-1]      
           else:
              LocPolygon=(MyPolygon-MNPos)*np.array([-lcx, lcy])
-
+  
         else:
-          print 'Unrecognised direction'   
-        #LocPolygon=RotateArray(LocPolygon,0.9)   
+          print 'Unrecognised direction'    
         CXYList=[XY(p[0],p[1]) for p in LocPolygon]
         for i in CXYList:
           CXYVector.push_back(i)
-        d=SectionsDict[s].d
         CSection.AddSection(d,CSectionPolygon(CXYVector))
-
     CYarn0=CYarn()
     CYarn0.AssignSection(CSection)
-
     for i,n in enumerate(CNodeList):
        CYarn0.AddNode(n)
        n0=CYarn0.GetNode(i)
@@ -1370,11 +1343,6 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
 
     CYarn0.AssignInterpolation(Interpolation)
     # Adjusted resolution depending on yarn type. 
-    #Original:
-    #if BinderBool:
-    #  CYarn0.SetResolution(int(NumSlices*0.6),50)
-    #else:
-    #  CYarn0.SetResolution(int(NumSlices*0.8),80) 
     if BinderBool:
       CYarn0.SetResolution(int(NumSlices*YarnPlotParameters['BinderRatio']),YarnPlotParameters['BinderSectionPopulation'])
     else:
@@ -1435,19 +1403,19 @@ def MeasurementStatistics(YarnsDict):
 
 if __name__=='__main__':
   #Get in the appropriate VF folder 
-  ModelLocation=cwd+'\\VF64'
+  ModelLocation=cwd+'\\VF55'
   os.chdir(ModelLocation)
   
-  DataLocation=ModelLocation+'\\Data2'
+  DataLocation=ModelLocation+'\\Data8'
   FieldOfViewData={
      'WindowSize' : np.genfromtxt('window_size.txt'),
      'ImageResolution' : np.genfromtxt('pixel_size.txt')
   }
   YarnPlotParameters={
-     'Ratio' : 2.0,  # controls the length-wise profiles used to plot the yarn - 1.0 equals to number of profiles measured by user
+     'Ratio' : 0.8,  # controls the length-wise profiles used to plot the yarn - 1.0 equals to number of profiles measured by user
      'BinderRatio' : 0.6,
-     'SectionPopulation' : 40,
-     'BinderSectionPopulation' : 25 
+     'SectionPopulation' : 80,
+     'BinderSectionPopulation' : 40
   }
   GlobalFlips={
      'x' : False,
@@ -1461,7 +1429,7 @@ if __name__=='__main__':
   }
 
   Textile,YarnsDict=BuildFromData(DataLocation,FieldOfViewData,GlobalFlips,LocalFlips,YarnPlotParameters)
-  SaveAsTG3(ModelLocation,'CT64',Textile,'CT64_0')
+  SaveAsTG3(ModelLocation,'CT55',Textile,'CT55_0')
   ##
   #NewTex,NewDomain=Extend(Textile,CDomain)
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)

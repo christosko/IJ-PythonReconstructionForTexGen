@@ -9,7 +9,7 @@ roi = image.getRoi()
 roi=roi.getInterpolatedPolygon(5,True)
 slic=image.getSlice()
 ### Define : 
-insert='X_3_0_' + str(slic)# + '_-1'
+insert='X_1_0_' + str(slic)# + '_-1'
 ###
 upper=True
 ####
@@ -27,7 +27,7 @@ if roi:
     x = polygon.xpoints
     y = polygon.ypoints
 
-    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF64\\Data\\'
+    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF64\\Data2\\'
     fileName=insert + '.dat'
     if os.path.isdir(dirPath):
       f = open(dirPath+fileName, 'w')
