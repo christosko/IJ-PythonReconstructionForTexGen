@@ -1,13 +1,14 @@
 #3D Structure tensor orientation
-from ij import IJ, ImagePlus
+from ij import IJ, ImagePlus 
 from ij.gui import PointRoi, PolygonRoi, Roi
+from ij.gui import Line, Overlay
 import math as m
 from jarray import zeros, array
 from Jama import Matrix, EigenvalueDecomposition
 # Get current ImagePlus
 imp=IJ.getImage()
 image = imp.getImageStack()
-
+#iproc=process.ImageProcessor()
 # Get current ROI
 #roi = image.getRoi()
 #slic=image.getSlice()
@@ -241,20 +242,27 @@ def StructureTensor(i,j,k,h,w,img):
   return Eval, EV
 
 d=48
-w=24
-h=4
+w=4
+h=2
 
-xrng=range(660,780,10)
-yrng=range(40,90,10)
-zrng=range(536,537,1)
+Roi=imp.getRoi()
 
-PRoi=PointRoi()
-#PRoi.addPoint()
+fbounds=Roi.getFloatBounds()
+
+grid_size=5
+xrng=range(int(fbounds.x),int(fbounds.x+fbounds.width),grid_size)
+yrng=range(int(fbounds.y),int(fbounds.y+fbounds.height),grid_size)
+S=imp.getSlice()
+
+zrng=range(int(S),int(S+1))
+
+#PRoi=PointRoi()
+Over=Overlay()
 
 for i in xrng:
   for j in yrng:
     for k in zrng:
-      scaling=10
+      scaling=15
       eigval,eigvec=StructureTensor(i,j,k,h,w,image)  
       Min=20000.000
       minind=0
@@ -275,21 +283,26 @@ for i in xrng:
       x=i
       y=j
       z=int(k)
-      if ratio>0.0:
+      if ratio>0.7:
          #print(x,y,z)               
-        # print(ratio,eigvec.get(minind,0),eigvec.get(minind,1),eigvec.get(minind,2))
-
-         PRoi.addPoint(x,y)  
-         x1=float(x+eigvec.get(minind,0)*(scaling/2))
-         y1=float(y+eigvec.get(minind,1)*(scaling/2))
+         # print(ratio,eigvec.get(minind,0),eigvec.get(minind,1),eigvec.get(minind,2))
+         
+         #PRoi.addPoint(x,y)  
+         x1=float(x+eigvec.get(minind,0)*scaling)
+         y1=float(y+eigvec.get(minind,2)*scaling)
          #z1=int(z+eigvec.get(minind,1)*(scaling/2))
-         PRoi.addPoint(x1,y1)
+         L=Line.create(x,y,x1,y1)
+         L.setWidth(2)
+         L.setPosition(zrng[0])
+         Over.add(L)
+         #PRoi.addPoint(x1,y1)
          #x2=float(x+eigvec.get(minind,0)*scaling)
          #y2=float(y+eigvec.get(minind,1)*scaling)
          #z2=int(z+eigvec.get(minind,1)*scaling)
          #PRoi.addPoint(x2,y2) 
       else:
-        pass
-        #PRoi.addPoint(x,y)  
-imp.setRoi(PRoi,0)
-imp.updateImage()
+         pass
+         #PRoi.addPoint(x,y)  
+#imp.setRoi(PRoi,0)
+#imp.updateImage()
+imp.setOverlay(Over)

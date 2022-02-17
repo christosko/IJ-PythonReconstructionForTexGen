@@ -244,7 +244,7 @@ class Yarns: # This class, after initialisation, takes sections using InsertSect
       # Fix duplicate node issue
       Nodes=self.Nodes
       NodeList=Nodes.GetList([])
-
+ 
       for i in range(Nodes.CountNodes()-1):
          self.Length+=NodeDistance(NodeList[i],NodeList[i+1])
       SecInd=sorted([i for i in self.Sections])
@@ -591,13 +591,13 @@ def YarnTypeSort(Textile):
       V=M1P-M0P
       M2=Yarn.GetNode(2)
       if M2:
-         print 'Binder: '+str(i)
+         #print 'Binder: '+str(i)
          Z.append(Yarn)
       elif CheckX(V):
-         print 'Warp: '+str(i)
+        # print 'Warp: '+str(i)
          X.append(Yarn)
       elif CheckY(V):  
-         print 'Weft: '+str(i)
+         #print 'Weft: '+str(i)
          Y.append(Yarn)
    return X,Y,Z
 
@@ -672,6 +672,54 @@ def SortInPlane(YarnSet,Axis,NumInPlane):
          #print([yarn[0].x for yarn in Layer]) 
    return SortedSet
 
+def GetMeasurementDensities(Textile,plt):
+   #DensitiesDict={
+   #   'Warp_Base' : None,
+   #   'Warp_High' : None,
+   #   'Weft_Base' : None,
+   #   'Weft_High' : None,
+   #   'Binder_H_Base' : None,
+   #   'Binder_H_High' : None,
+   #   'Binder_V_Base' : None,
+   #   'Binder_V_High' : None
+   #}
+   num=0
+   X,Y,Z=YarnTypeSort(Textile)
+   DensX=np.zeros([len(X)])
+   DensY=np.zeros([len(Y)])
+   DensZ=np.zeros([len(Z)])
+   for i,yarn in enumerate(X):
+      ProfNum=float(len(yarn.GetSlaveNodes(2)))
+      Length=yarn.GetRawYarnLength()
+      DensX[i]=ProfNum/Length
+      print('Warp ',DensX[i])
+      num+=ProfNum
+   for i,yarn in enumerate(Y):
+      ProfNum=float(len(yarn.GetSlaveNodes(2)))
+      
+      Length=yarn.GetRawYarnLength()
+      DensY[i]=ProfNum/Length
+      print('Weft ',DensY[i])
+      num+=ProfNum
+   for i,yarn in enumerate(Z):
+      ProfNum=float(len(yarn.GetSlaveNodes(2)))
+      
+      Length=yarn.GetRawYarnLength()
+      DensZ[i]=ProfNum/Length
+      print('Binder ',DensZ[i])
+      num+=ProfNum
+   plt.hist(DensX, alpha=0.7, color='b', label='Warp')
+   plt.hist(DensY, alpha=0.7, color='g', label='Weft')
+   plt.hist(DensZ, alpha=0.7, color='r', label='Binder')               
+   print('all',num)
+   meanX,stdX=np.mean(DensX),np.std(DensX)
+   meanY,stdY=np.mean(DensY),np.std(DensY)
+   meanZ,stdZ=np.mean(DensZ),np.std(DensZ)
+   print 'X: '+str(meanX)+' '+str(stdX)+'\n'
+   print 'Y: '+str(meanY)+' '+str(stdY)+'\n'
+   print 'Z: '+str(meanZ)+' '+str(stdZ)+'\n'
+   return plt
+
 def Find2DIntersection(Yarn1, Yarn2, window):
    mindist=1e5
    #Find closest slave points first 
@@ -731,7 +779,7 @@ def Find2DIntersection(Yarn1, Yarn2, window):
       Point=XY(Yarn1[minind1].x,Yarn1[minind1].y)
    return Point
 
-def BuildControlPoints(Textile,InPlaneNumWeft,InPlaneNumWarp):
+def BuildControlPoints(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
    # Control points are defined a set of points which characterise the architecture pattern distortion
    # The points are supposed to be spaced irregularly because the geometry is distortded
    # By connecting the control point to form a brick mesh of the domain, each element contains
@@ -741,6 +789,9 @@ def BuildControlPoints(Textile,InPlaneNumWeft,InPlaneNumWarp):
    # If we assume the same element-wise affine transformations required to get to the regular grid from the 
    # irregular can be applied for the respective point set, a reverse process based on brick element shape functions
    # can be defined. 
+   D0=XYZ()
+   D1=XYZ()
+   out=Domain.GetBoxLimits(D0,D1)
    X,Y,Z=YarnTypeSort(Textile)
 
    window=3
@@ -770,28 +821,72 @@ def BuildControlPoints(Textile,InPlaneNumWeft,InPlaneNumWarp):
    # Top Layer Control Points
    #Control_Points=[[[None for i in range(InPlaneNumWeft-1)] for j in range(InPlaneNumWarp)] for k in range(3)]
    Control_Points_Vec=XYZVector()
-
-   for weft in TopWeft:
-      for warp in UpperWarp:
+   
+   for i,weft in enumerate(TopWeft):
+      for j,warp in enumerate(UpperWarp):
          Point1=Find2DIntersection(weft,warp,window)
          #Control_Points[i][j][2]=XYZ(Point1.x,Point1.y,upperz)
-         Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,upperz))
-   for weft in MidWeft:
+         Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,D1.z))
+         if i==0:
+            Control_Points_Vec.push_back(XYZ(D0.x,Point1.y,D1.z))
+         
+         if i==len(TopWeft)-1:
+            Control_Points_Vec.push_back(XYZ(D1.x,Point1.y,D1.z))  
+         
+         if j==0:
+            Control_Points_Vec.push_back(XYZ(Point1.x,D0.y,D1.z))   
+         
+         if j==len(UpperWarp)-1:
+            Control_Points_Vec.push_back(XYZ(Point1.x,D1.y,D1.z))
+
+   for i,weft in enumerate(MidWeft):
       for j,warp in enumerate(UpperMidWarp):
          Point1=Find2DIntersection(weft,warp,window)
          Point2=Find2DIntersection(weft,LowerMidWarp[j],window)  
          AvPoint=(Point1+Point2)*0.5
          #Control_Points[i][j][1]=XYZ(AvPoint.x,AvPoint.y,middz)
          Control_Points_Vec.push_back(XYZ(AvPoint.x,AvPoint.y,middz))
-   for weft in BottomWeft:
-      for warp in LowerWarp:
+         if i==0:
+            Control_Points_Vec.push_back(XYZ(D0.x,AvPoint.y,middz))
+
+         if i==len(MidWeft)-1:
+            Control_Points_Vec.push_back(XYZ(D1.x,AvPoint.y,middz))  
+         
+         if j==0:
+            Control_Points_Vec.push_back(XYZ(AvPoint.x,D0.y,middz))   
+         
+         if j==len(UpperMidWarp)-1:
+            Control_Points_Vec.push_back(XYZ(AvPoint.x,D1.y,middz))     
+
+   for i,weft in enumerate(BottomWeft):
+      for j,warp in enumerate(LowerWarp):
          Point1=Find2DIntersection(weft,warp,window)
-         Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,lowerz))
-         #Control_Points[i][j][2]=XYZ(Point1.x,Point1.y,lowerz)
-   #print(Control_Points)
+         Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,D0.z))
+         if i==0:
+            Control_Points_Vec.push_back(XYZ(D0.x,Point1.y,D0.z))
+         
+         if i==len(BottomWeft)-1:
+            Control_Points_Vec.push_back(XYZ(D1.x,Point1.y,D0.z))  
+         
+         if j==0:
+            Control_Points_Vec.push_back(XYZ(Point1.x,D0.y,D0.z))   
+         
+         if j==len(LowerWarp)-1:
+            Control_Points_Vec.push_back(XYZ(Point1.x,D1.y,D0.z))         
    # Find a way to identify cross over points and yarn section in vicinity
    #ControlMesh=XYZVector()
-
+   Control_Points_Vec.push_back(XYZ(D0.x,D0.y,D1.z))
+   Control_Points_Vec.push_back(XYZ(D1.x,D1.y,D1.z))
+   Control_Points_Vec.push_back(XYZ(D0.x,D1.y,D1.z))
+   Control_Points_Vec.push_back(XYZ(D1.x,D0.y,D1.z))
+   Control_Points_Vec.push_back(XYZ(D0.x,D0.y,middz))
+   Control_Points_Vec.push_back(XYZ(D1.x,D1.y,middz))
+   Control_Points_Vec.push_back(XYZ(D0.x,D1.y,middz))
+   Control_Points_Vec.push_back(XYZ(D1.x,D0.y,middz))
+   Control_Points_Vec.push_back(XYZ(D0.x,D0.y,D0.z))
+   Control_Points_Vec.push_back(XYZ(D1.x,D1.y,D0.z))
+   Control_Points_Vec.push_back(XYZ(D0.x,D1.y,D0.z))
+   Control_Points_Vec.push_back(XYZ(D1.x,D0.y,D0.z))  
    return Control_Points_Vec
 
 def RegulariseControlPoints(PointVector,PlaneNumX,PlaneNumY):
@@ -955,9 +1050,68 @@ def PlotProjectedCentroids(Textile):
    PlotScatterProj2D(X,Y,'X','Y','XY Projection')
    return 0
 
+def GetTranslationVectors(Textile):
+    Warp, Weft, Binder = YarnTypeSort(Textile)
+    D0Y=0
+    D0Ycount=0
+    ########################
+    ### Compute average translation vectors ################   
+    ##  translation vector in Y axis:  
+    dysum=0
+    Bnum=0
+    for i,b in enumerate(Binder[:-1]):
+       m0=b.GetNode(2).GetPosition()
+       mindist=100.0
+       for b1 in Binder[i+1:]:
+          m1=b1.GetNode(2).GetPosition()
+          V=m1-m0        
+          if CheckY(V) and abs(V.y)<=mindist:
+             mindist=abs(V.y)
+       if mindist<100.0:       
+          dysum+=mindist
+          Bnum+=1
+
+    Wanum=0
+    for i,wa in enumerate(Warp[:-1]):
+       m0=wa.GetNode(0).GetPosition()
+       mindist=100.0
+       for wa1 in Warp[i+1:]:
+          m1=wa1.GetNode(0).GetPosition()
+          V=m1-m0       
+          if V.y>0:
+             D0Y+=m0.y## To be updated
+             D0Ycount+=1 
+          if CheckY(V) and abs(V.y)<=mindist:
+             mindist=abs(V.y)
+       if mindist<100.0:       
+          dysum+=mindist
+          Wanum+=1
+
+    dymean=dysum/(Bnum+Wanum)
+
+    TVy=XYZ(0.0,2*dymean,0.0)
+    #############
+    ## Translation vector in X axis ### 
+    dxsum=0
+    Wenum=0
+    for i,we in enumerate(Weft[:-1]):
+       m0=we.GetNode(0).GetPosition()
+       mindist=100.0
+       for we1 in Weft[i+1:]:
+          m1=we1.GetNode(0).GetPosition()
+          V=m1-m0        
+          if CheckX(V) and abs(V.x)<=mindist:
+             mindist=abs(V.x)
+       dxsum+=mindist
+       Wenum+=1
+
+    dxmean=dxsum/Wenum
+    TVx=XYZ(2*dxmean,0.0,0.0)   
+    return TVx,TVy
+
 def Extend(Textile,ODomain):
  
-    Yarns=Textile.GetYarns()
+    #Yarns=Textile.GetYarns()
     Warp, Weft, Binder = YarnTypeSort(Textile)
     D0Y=0
     D0Ycount=0
@@ -1021,15 +1175,13 @@ def Extend(Textile,ODomain):
        dxsum+=mindist
        Wenum+=1
 
-    dxmean=dxsum/Wenum
-    print(dxmean)    
-    
+    dxmean=dxsum/Wenum    
     TVx=XYZ(2*dxmean,0.0,0.0)
     #########################
     NewTextile=CTextile()
     Interpolation=CInterpolationBezier(False, False, False)     
     #### Extend Weft yarns ## 
-    tolerance=1.0e-1
+
     for y in WeftO:    
        
        NewWeft=CYarn()
@@ -1157,22 +1309,86 @@ def EnforcePeriodicity(Textile,Domain):
       NewTextile.AddYarn(y)
     NewTextile.AssignDomain(Domain)
     return NewTextile
-
+##### To do ... #################
+###############################
 def GetPointCloud(Textile):
-   #To do 
-   Yarns=Textile.GetYarns()
+   #Retrieves point cloud from interpolated yarn surfaces
+   Warp, Weft, Binder = YarnTypeSort(Textile)
+
    PointCloud=XYZVector()
-   for yarn in Yarns:
+
+   for yarn in Warp+Weft+Binder:
       slavenodes=yarn.GetSlaveNodes(2)
       for s in slavenodes:
          secpts=s.GetSectionPoints()
          for point in secpts:
-            PointCloud.push_back(point)   
+            PointCloud.push_back(point) 
    return PointCloud
 
-def Assign8thDomain(Textile): #under construction
-   
-   return Textile
+
+def UndistortTextile(Textile,Domain,PointCloud):
+   print("Entered undistort function")
+   Warp, Weft, Binder = YarnTypeSort(Textile)
+   Xmark=len(Warp)-1
+   Ymark=Xmark+len(Weft)
+   NewTextile=CTextile()
+   Interpolation=CInterpolationBezier(False, False, False) 
+   gpos=0
+   for ind,y in enumerate(Warp+Weft+Binder):
+ 
+       NewYarnSection=CYarnSectionInterpPosition()
+       NYarn=CYarn()
+       SlaveNodes=list(y.GetSlaveNodes(2))
+       NumMNodes=y.GetNumNodes()
+       MNodeList=y.GetMasterNodes()
+       MNodePosList=[MNodeList[i].GetPosition() for i in range(NumMNodes)]
+       DirDict={i:'' for i in range(0,NumMNodes,2)}
+       MtList=[float(i/(NumMNodes-1)) for i in range(NumMNodes)]   
+       for n in range(0,NumMNodes,2):
+          if CheckX(MNodePosList[n+1]-MNodePosList[n]):
+             DirDict[n]='X'
+          elif CheckZ(MNodePosList[n+1]-MNodePosList[n]):
+             DirDict[n]='Z'
+          elif CheckY(MNodePosList[n+1]-MNodePosList[n]):
+             DirDict[n]='Y'
+
+       for s in SlaveNodes:
+          pos=s.GetPosition()
+          NumSec=len(s.Get2DSectionPoints())
+          posfract=s.GetT()
+          Polygon=PointCloud[gpos:gpos+NumSec]
+          LocPolygon=XYZVector()
+          for p in Polygon:
+             LocPolygon.push_back(p-pos)
+          LocPolygon2D=XYVector()
+          if ind<=Xmark:
+             for v in LocPolygon:
+                 LocPolygon2D.push_back(XY(v.y,v.z))           
+          elif ind>Xmark and ind<=Ymark:
+             for v in LocPolygon:
+                 LocPolygon2D.push_back(XY(v.x,v.z))
+          elif ind>Ymark:  
+             for n in range(0,NumMNodes,2):
+                if posfract>=MtList[n] and posfract<=MtList[n+1]:  
+                   if DirDict[n]=='X':
+                      for v in LocPolygon:
+                         LocPolygon2D.push_back(XY(v.y,v.z))
+                   elif DirDict[n]=='Z': 
+                      for v in LocPolygon:
+                         LocPolygon2D.push_back(XY(v.x,v.y)) 
+                   else:
+                      LocPolygon2D=s.Get2DSectionPoints()
+          gpos+=NumSec          
+          NewYarnSection.AddSection(posfract,CSectionPolygon(LocPolygon2D))   
+
+       NYarn.AssignSection(NewYarnSection)
+       for N in MNodeList:
+          NYarn.AddNode(N)
+       NYarn.AssignInterpolation(Interpolation)
+       NewTextile.AddYarn(NYarn)         
+   print("Exit undistort")
+   NewTextile.AssignDomain(Domain)  
+   return NewTextile
 
 def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlotParameters):
   #Get in the appropriate VF folder 
@@ -1351,7 +1567,7 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
     Textile.AddYarn(CYarn0)  
     Textile.AssignDomain(CDomain)
 
-  return Textile, MyYarnDict
+  return Textile, CDomain
 
 def ImportFromTG3(ModelLocation,ModelName,TexName):
    ReadFromXML(ModelLocation+'/'+ModelName+'.tg3')
@@ -1403,10 +1619,14 @@ def MeasurementStatistics(YarnsDict):
 
 if __name__=='__main__':
   #Get in the appropriate VF folder 
-  ModelLocation=cwd+'\\VF55'
+  ModelLocation=cwd+'\\VF64'
   os.chdir(ModelLocation)
   
-  DataLocation=ModelLocation+'\\Data8'
+  DataLocation=ModelLocation+'\\Data2'
+  InPlaneYarns={
+     'Warp' : 2,
+     'Weft' : 4
+  }
   FieldOfViewData={
      'WindowSize' : np.genfromtxt('window_size.txt'),
      'ImageResolution' : np.genfromtxt('pixel_size.txt')
@@ -1414,8 +1634,8 @@ if __name__=='__main__':
   YarnPlotParameters={
      'Ratio' : 0.8,  # controls the length-wise profiles used to plot the yarn - 1.0 equals to number of profiles measured by user
      'BinderRatio' : 0.6,
-     'SectionPopulation' : 80,
-     'BinderSectionPopulation' : 40
+     'SectionPopulation' : 50,
+     'BinderSectionPopulation' : 25
   }
   GlobalFlips={
      'x' : False,
@@ -1428,44 +1648,52 @@ if __name__=='__main__':
      'z' : False
   }
 
-  Textile,YarnsDict=BuildFromData(DataLocation,FieldOfViewData,GlobalFlips,LocalFlips,YarnPlotParameters)
-  SaveAsTG3(ModelLocation,'CT55',Textile,'CT55_0')
+  Textile,Domain=BuildFromData(DataLocation,FieldOfViewData,GlobalFlips,LocalFlips,YarnPlotParameters)
+  #Textile,Domain=Extend(Textile,Domain)
+  #SaveAsTG3(ModelLocation,'CT64',Textile,'CT64_0')
   ##
   #NewTex,NewDomain=Extend(Textile,CDomain)
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)
   #NewTex.AssignDomain(CDomain)
   ##
   ##Find control points from TexGen model, build mesh and compute regularised point cloud
-  #ControlPts=BuildControlPoints(Textile,4,2)
-  #DataPts=GetPointCloud(Textile)
-  #mesh,regmesh=cm.BuildMesh(ControlPts,4,2,3)
-  #regmesh=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
+ # ControlPts=BuildControlPoints(Textile,Domain,InPlaneYarns['Weft'],InPlaneYarns['Warp'])
+ # DataPts=GetPointCloud(Textile)
+ # mesh,regmesh,gnodes=cm.BuildMesh(ControlPts,InPlaneYarns['Weft']+2,InPlaneYarns['Warp']+2,3)
+ # regmesh, UPointCloud=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
   ##
-
-  
+ 
+ # SaveAbaqusMesh(gnodes,mesh,ModelLocation,'FullDomainMesh')
+ # NewTex=UndistortTextile(Textile,Domain,UPointCloud)
+  ## Plot region#################  
   #fig=plt.figure()
   #font={'family':'normal',
   #      'weight':'normal',
   #      'size'  : 16}
   #plt.rc('font',**font)  
   #ax=fig.add_subplot(111,projection='3d')
+  ##ax=fig.add_subplot()
   #PlotScatter3D(ControlPts,ax,'black')
-  
-  #Plot Region : Comment lines according to designated plotting sections
-  
-  ###Plot scatter of data points in control mesh
-  #PlotElementSortScatter(mesh,fig,ax)
-  ### end
-  ##Displacement vector field
+  #
+  ##plt=GetMeasurementDensities(Textile,plt)
+#
+  ##Plot Region : Comment lines according to designated plotting sections
+  #
+  ####Plot scatter of data points in control mesh
+  ##PlotElementSortScatter(mesh,fig,ax)
+  #### end
+  ###Displacement vector field
   #PlotVectorField3D(mesh,regmesh,fig,ax)
-  ##
+  ###
+  #plt.legend()
   #plt.show() # Comment accordingly
 
   #Finalise and save TG3 file:
   #Textile.AssignDomain(CDomain)
-  #AddTextile('Rec9',NewTex)
+  AddTextile('Rec64',Textile)
   #AddTextile('Rec9',Textile)
-  #SaveToXML(cwd+'\\Reconstruction10.tg3',"",OUTPUT_STANDARD)
+
+  SaveToXML(ModelLocation+'\\CT64.tg3',"",OUTPUT_STANDARD)
 
 
     

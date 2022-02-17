@@ -1,6 +1,7 @@
 #2D Structure tensor orientation
 from ij import IJ
 from ij.gui import PointRoi, PolygonRoi, Roi
+from ij.gui import Line, Overlay
 import math as m
 from jarray import zeros, array
 from Jama import Matrix, EigenvalueDecomposition
@@ -134,18 +135,24 @@ def StructureTensor(i,j,h,w,img):
 
   return Eval, EV
 
-d=8
+d=6
 w=18
 h=2
+#PRoi=PointRoi()
+Over=Overlay()
+Roi=image.getRoi()
 
-xrng=range(440,580,10)
-yrng=range(100,180,10)
-PRoi=PointRoi()
+fbounds=Roi.getFloatBounds()
+
+grid_size=5
+
+xrng=range(int(fbounds.x),int(fbounds.x+fbounds.width),grid_size)
+yrng=range(int(fbounds.y),int(fbounds.y+fbounds.height),grid_size)
 
 for i in xrng:
   for j in yrng:
      eigval,eigvec=StructureTensor(i,j,h,w,image)
-     scaling=4
+     scaling=15
      Min=20000.000
      minind=0
      for e in range(len(eigval)):
@@ -162,12 +169,22 @@ for i in xrng:
        ratio=0.0
      #print(ratio)  
      scaling=scaling*ratio
-     if ratio>0.3:               
-       PRoi.addPoint(i,j)  
-       PRoi.addPoint(float(i+eigvec.get(minind,0)*(scaling/2)),float(j+eigvec.get(minind,1)*(scaling/2)))
-       PRoi.addPoint(float(i+eigvec.get(minind,0)*scaling),float(j+eigvec.get(minind,1)*scaling)) 
+     x=i
+     y=j
+     if ratio>0.999:               
+       x1=float(x+eigvec.get(minind,0)*scaling)
+       y1=float(y-eigvec.get(minind,1)*scaling)
+       #z1=int(z+eigvec.get(minind,1)*(scaling/2))
+       L=Line.create(x,y,x1,y1)
+       L.setWidth(2)
+       #L.setPosition(zrng[0])
+       Over.add(L)     
+       #PRoi.addPoint(i,j)  
+       #PRoi.addPoint(float(i+eigvec.get(minind,0)*(scaling/2)),float(j+eigvec.get(minind,1)*(scaling/2)))
+       #PRoi.addPoint(float(i+eigvec.get(minind,0)*scaling),float(j+eigvec.get(minind,1)*scaling)) 
      else:
        pass
        #PRoi.addPoint(i,j)  
-image.setRoi(PRoi,0)
+#image.setRoi(PRoi,0)
+image.setOverlay(Over)
 image.updateImage()

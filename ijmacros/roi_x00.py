@@ -9,9 +9,9 @@ roi = image.getRoi()
 roi=roi.getInterpolatedPolygon(5,True)
 slic=image.getSlice()
 ### Define : 
-insert='X_1_0_' + str(slic)# + '_-1'
+insert='X_7_0_' + str(slic)# + '_-1'
 ###
-upper=True
+upper=True # Check if it's the upper or lower part of the binder yarn
 ####
 insert_break=insert.split('_')
 if insert_break[2]=='-1' and upper:

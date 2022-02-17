@@ -102,6 +102,7 @@ class BrickElement:
         self.Connectivity=[]
         self.ShapeFunctions=[]
         self.DataPoints=XYZVector()
+        self.IndexMatch={}
 
     def InsertNode(self,node):
         if isinstance(node,Node):
@@ -112,8 +113,10 @@ class BrickElement:
            print 'Invalide type for node\n'
            return None
 
-    def InsertPoint(self,Point):
+    def InsertPoint(self,Point,GlobalIndex=0):
         if isinstance(Point,XYZ):
+           ind=len(self.DataPoints)
+           self.IndexMatch[ind]=GlobalIndex 
            self.DataPoints.push_back(Point)
            return 0
         else:
@@ -196,7 +199,7 @@ def BuildMesh(Points,NumYZPlanes,NumXZPlanes,NumXYPlanes):
        
        Elements.append(myElement) 
        RegElements.append(myRegElement)       
-    return Elements, RegElements
+    return Elements, RegElements, GlobalNodes
 
 def TrasformationMatrix(FaceNodes):
     #A matrix used to epxress data points in element's face local coordinates to identify inclusion
@@ -223,11 +226,12 @@ def TrasformationMatrix(FaceNodes):
     return T 
 
 def PointInHex(Point,NodesVector):
-    # Node list is in abaqus convention order : 1st 4 inward facing normal - bottom 
-    # face and 2nd 4 outward facing normal - top face
-    # 6 faces with outward pointing normal vectors need to be defined    
+    # Node list is in abaqus standard order : bottom 
+    # face counter clockwise and top face counter clockwise
+    # 6 faces with outward pointing normal vectors must be defined    
     IN=[False for i in range(6)]
     N=NodesVector
+    #Faces with node orders subject to right hand rule for outward pointing normal vector
     FaceNodesInds=[
     [0,3,2,1],
     [0,4,7,3],
@@ -254,25 +258,31 @@ def PointInHex(Point,NodesVector):
 def UndistortedPointCloud(PointCloud,DistMesh,RegMesh):
     
     # Points need to be labeled based on the element the lie in 
-    # This is achieved by checking if a point lies in a hexahedron 
+    # This is achieved by checking if a point lies in the hexahedron 
     Hash=[True for point in PointCloud]
+    #MemUPC=[None for point in PointCloud]
+    UPointCloud=PointCloud
     LSF=[LocalShapeFunctions() for i in range(8)]
     nodezeta=[-1.0,1.0,1.0,-1.0,-1.0,1.0,1.0,-1.0]
     nodeeta=[-1.0,-1.0,1.0,1.0,-1.0,-1.0,1.0,1.0]
     nodeksi=[-1.0,-1.0,-1.0,-1.0,1.0,1.0,1.0,1.0]    
     for ind,element in enumerate(DistMesh):
         nodeset=element.NodePositions
+        StoreInds=[]
+        distpoints=XYZVector()
         for j,p in enumerate(PointCloud):
             if Hash[j]:
                 if PointInHex(p,nodeset):
-                    element.InsertPoint(p)
+                    ## element.InsertPoint(p,j)
+                    distpoints.push_back(p)
+                    StoreInds.append(j)
                     Hash[j]=False
 
-        distpoints=element.DataPoints
+        #distpoints=element.DataPoints
         regnodepos=RegMesh[ind].NodePositions
         SF=element.ShapeFunctions
 
-        for p in distpoints:
+        for pi,p in enumerate(distpoints):
             pz=0.0
             pe=0.0
             pk=0.0
@@ -287,9 +297,24 @@ def UndistortedPointCloud(PointCloud,DistMesh,RegMesh):
                 newx+=regnodepos[i].x*LSF[i].Value(i,np.array([pz,pe,pk]))
                 newy+=regnodepos[i].y*LSF[i].Value(i,np.array([pz,pe,pk]))
                 newz+=regnodepos[i].z*LSF[i].Value(i,np.array([pz,pe,pk]))    
-            RegMesh[ind].InsertPoint(XYZ(newx,newy,newz))
-   
-    return RegMesh
+            UPointCloud[StoreInds[pi]]=XYZ(newx,newy,newz)
+            #RegMesh[ind].InsertPoint(XYZ(newx,newy,newz))
+            
+        #RegMesh[ind].IndexMatch=element.IndexMatch
+    #UPointCloud=XYZVector()
+    #for el in RegMesh:
+    #
+    #    for i,p in enumerate(el.DataPoints):
+    #        MemUPC[el.IndexMatch[i]]=p
+            
+    #for i,p in enumerate(MemUPC):
+    #    try: 
+    #      UPointCloud.push_back(p)
+    #    except ValueError:
+    #      print('None value in position: '+str(i))    
+    
+    return RegMesh, UPointCloud
+
 if __name__=='__main__':
     #test=XYZVector()
     #for i in range(5):
