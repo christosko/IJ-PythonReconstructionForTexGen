@@ -1,0 +1,43 @@
+2022-03-04 19:48:54,959--[Thread](122380)  Downloader version: 2.6.1.0
+2022-03-04 19:48:54,959--[Thread](122380)  Screen: 1920*1080, 1
+2022-03-04 19:48:54,959--[Thread](122380)  Request For Product Config -- [Downloader Id]: 169 [Site Id]: 126 [Language Id]: 1033
+2022-03-04 19:48:54,959--[Thread](122380)  Configure Load From XML! 
+2022-03-04 19:48:54,959--[Thread](122380)  [File ContentLength]: 64925832
+2022-03-04 19:48:54,959--[Thread](122380)  [Downloader Id]: 169
+2022-03-04 19:48:54,959--[Thread](122380)  [SoftWare Id]: 2089
+2022-03-04 19:48:54,959--[Thread](122380)  [Site Id]: 126
+2022-03-04 19:48:54,959--[Thread](122380)  [Language Id]: 1033
+2022-03-04 19:48:54,959--[Thread](122380)  [Software Name]: Tenorshare 4DDiG
+2022-03-04 19:48:54,959--[Thread](122380)  [Software Version]: 8.2.2
+2022-03-04 19:48:54,959--[Thread](122380)  [Remote Path]: http://dl.tenorshare.net/AnyDataRecovery_4ddigbing.exe
+2022-03-04 19:48:54,959--[Thread](122380)  [MD5 String]: 20c8212eadb6253e094099bd896d1fd1
+2022-03-04 19:48:54,959--[Thread](122380)  [Process Name]: NetFrameCheck.exe
+2022-03-04 19:48:54,959--[Thread](122380)  [Install Url]: 
+2022-03-04 19:48:54,959--[Thread](122380)  [Banner Url]: 
+2022-03-04 19:48:54,959--[Thread](122380)  [Licensefile Url]: 
+2022-03-04 19:48:54,959--[Thread](122380)  [Extra Download Url]: https://download.tenorshare.net/downloads/extra/AnyDataRecovery_4ddigbing.exe
+2022-03-04 19:48:54,959--[Thread](122380)  [Cnet Download Url]: 
+2022-03-04 19:48:54,959--[Thread](122380)  [MD5 Extra String]: 5267d8512571e8c4621491de514317bf
+2022-03-04 19:48:56,499--[Thread](123976)  isForbidCDN: 0
+2022-03-04 19:48:56,499--[Thread](123976)  UrlUsed: https://download.tenorshare.net/downloads/extra/AnyDataRecovery_4ddigbing.exe
+2022-03-04 19:48:56,499--[Thread](123976)  Speed-Test Totally Take 0 ms
+2022-03-04 19:48:57,700--[Thread](123976)  Get Contentlength = 64925832
+2022-03-04 19:48:57,700--[Thread](123976)  GetSize: Download, Success/Null/Null/Null/Null
+2022-03-04 19:48:57,701--[Thread](9260)  Request Range: (58, 1048575) 59768832-60817407
+2022-03-04 19:48:57,701--[Thread](9580)  Request Range: (59, 1048575) 60817408-61865983
+2022-03-04 19:48:57,701--[Thread](65296)  Request Range: (56, 1048575) 57671680-58720255
+2022-03-04 19:48:57,701--[Thread](36208)  Request Range: (60, 1048575) 61865984-62914559
+2022-03-04 19:48:57,701--[Thread](9892)  Request Range: (54, 1048575) 55574528-56623103
+2022-03-04 19:48:57,701--[Thread](54300)  Request Range: (55, 1048575) 56623104-57671679
+2022-03-04 19:48:57,701--[Thread](136452)  Request Range: (61, 2011272) 62914560-64925832
+2022-03-04 19:48:57,701--[Thread](107300)  Request Range: (57, 1048575) 58720256-59768831
+2022-03-04 19:48:57,701--[Thread](44640)  Request Range: (52, 1048575) 53477376-54525951
+2022-03-04 19:48:57,701--[Thread](67328)  Request Range: (53, 1048575) 54525952-55574527
+2022-03-04 19:48:58,859--[Thread](9260)  Request Range: (51, 1048575) 52428800-53477375
+2022-03-04 19:48:58,865--[Thread](9892)  Request Range: (50, 1048575) 51380224-52428799
+2022-03-04 19:48:58,867--[Thread](9580)  Request Range: (49, 1048575) 50331648-51380223
+2022-03-04 19:48:58,869--[Thread](65296)  Request Range: (48, 1048575) 49283072-50331647
+2022-03-04 19:48:58,879--[Thread](107300)  Request Range: (47, 1048575) 48234496-49283071
+2022-03-04 19:48:58,881--[Thread](36208)  Request Range: (46, 1048575) 47185920-48234495
+2022-03-04 19:48:58,895--[Thread](136452)  Request Range: (45, 1048575) 46137344-47185919
+2022-03-04 19:48:58,930--[Thread](67328)  Reque

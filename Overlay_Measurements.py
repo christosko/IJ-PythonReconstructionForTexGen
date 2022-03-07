@@ -41,11 +41,15 @@ for i,d in enumerate(dats):
     sumx+=x
     sumy+=y
     N+=1
+    
   ax=sumx//N
   ay=sumy//N  
   Polygon.setPosition(Slice)
   MyOverlay.add(Polygon)
-  Label=TextRoi(ax,ay,str(YarnIndex))
+  if i==len(dats)-1:
+    Label=TextRoi(ax,ay,str(YarnIndex)+' Last')
+  else:
+    Label=TextRoi(ax,ay,str(YarnIndex))
   Label.setPosition(Slice)
   MyOverlay.add(Label)
   fil.close()

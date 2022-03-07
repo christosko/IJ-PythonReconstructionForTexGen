@@ -5,6 +5,7 @@ from ij.gui import Line, Overlay
 import math as m
 from jarray import zeros, array
 from Jama import Matrix, EigenvalueDecomposition
+import os
 # Get current ImagePlus
 imp=IJ.getImage()
 image = imp.getImageStack()
@@ -243,18 +244,27 @@ def StructureTensor(i,j,k,h,w,img):
 
 d=48
 w=4
-h=2
+h=1
 
 Roi=imp.getRoi()
 
 fbounds=Roi.getFloatBounds()
 
-grid_size=5
+grid_size=4
 xrng=range(int(fbounds.x),int(fbounds.x+fbounds.width),grid_size)
 yrng=range(int(fbounds.y),int(fbounds.y+fbounds.height),grid_size)
 S=imp.getSlice()
 
-zrng=range(int(S),int(S+1))
+depth=(xrng[-1]-xrng[0])//6
+dep_step=5
+zrng=range(int(S-depth),int(S+depth),dep_step)
+
+# Store vector field : 
+fold='D:\\IJPythonReconstructionOfTexComp\\VF55'
+os.chdir(fold)
+fstart=open('OriStart.dat','w')
+fend=open('OriEnd.dat','w')
+
 
 #PRoi=PointRoi()
 Over=Overlay()
@@ -262,7 +272,7 @@ Over=Overlay()
 for i in xrng:
   for j in yrng:
     for k in zrng:
-      scaling=15
+      scaling=5# Fix colour scheme back to normal
       eigval,eigvec=StructureTensor(i,j,k,h,w,image)  
       Min=20000.000
       minind=0
@@ -283,17 +293,21 @@ for i in xrng:
       x=i
       y=j
       z=int(k)
-      if ratio>0.7:
+      if ratio>0.8:
          #print(x,y,z)               
          # print(ratio,eigvec.get(minind,0),eigvec.get(minind,1),eigvec.get(minind,2))
          
          #PRoi.addPoint(x,y)  
          x1=float(x+eigvec.get(minind,0)*scaling)
          y1=float(y+eigvec.get(minind,2)*scaling)
+         z1=float(z+eigvec.get(minind,1)*scaling)
+
          #z1=int(z+eigvec.get(minind,1)*(scaling/2))
+         fstart.write(str(x)+' '+str(y)+' '+str(z)+'\n')
+         fend.write(str(x1)+' '+str(y1)+' '+str(z1)+'\n')
          L=Line.create(x,y,x1,y1)
          L.setWidth(2)
-         L.setPosition(zrng[0])
+         L.setPosition(z)
          Over.add(L)
          #PRoi.addPoint(x1,y1)
          #x2=float(x+eigvec.get(minind,0)*scaling)
@@ -306,3 +320,7 @@ for i in xrng:
 #imp.setRoi(PRoi,0)
 #imp.updateImage()
 imp.setOverlay(Over)
+fstart.close()
+fend.close()
+
+

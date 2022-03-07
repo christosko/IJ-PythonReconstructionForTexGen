@@ -261,7 +261,9 @@ def UndistortedPointCloud(PointCloud,DistMesh,RegMesh):
     # This is achieved by checking if a point lies in the hexahedron 
     Hash=[True for point in PointCloud]
     #MemUPC=[None for point in PointCloud]
-    UPointCloud=PointCloud
+    UPointCloud=XYZVector(len(PointCloud))
+    for i,p in enumerate(PointCloud):
+        UPointCloud[i]=p 
     LSF=[LocalShapeFunctions() for i in range(8)]
     nodezeta=[-1.0,1.0,1.0,-1.0,-1.0,1.0,1.0,-1.0]
     nodeeta=[-1.0,-1.0,1.0,1.0,-1.0,-1.0,1.0,1.0]
@@ -273,10 +275,10 @@ def UndistortedPointCloud(PointCloud,DistMesh,RegMesh):
         for j,p in enumerate(PointCloud):
             if Hash[j]:
                 if PointInHex(p,nodeset):
-                    ## element.InsertPoint(p,j)
-                    distpoints.push_back(p)
-                    StoreInds.append(j)
-                    Hash[j]=False
+                   element.InsertPoint(p,j)
+                   distpoints.push_back(p)
+                   StoreInds.append(j)
+                   Hash[j]=False
 
         #distpoints=element.DataPoints
         regnodepos=RegMesh[ind].NodePositions
@@ -297,8 +299,10 @@ def UndistortedPointCloud(PointCloud,DistMesh,RegMesh):
                 newx+=regnodepos[i].x*LSF[i].Value(i,np.array([pz,pe,pk]))
                 newy+=regnodepos[i].y*LSF[i].Value(i,np.array([pz,pe,pk]))
                 newz+=regnodepos[i].z*LSF[i].Value(i,np.array([pz,pe,pk]))    
+             
             UPointCloud[StoreInds[pi]]=XYZ(newx,newy,newz)
-            #RegMesh[ind].InsertPoint(XYZ(newx,newy,newz))
+            #print(UPointCloud[StoreInds[pi]]-p)   
+            RegMesh[ind].InsertPoint(XYZ(newx,newy,newz))
             
         #RegMesh[ind].IndexMatch=element.IndexMatch
     #UPointCloud=XYZVector()

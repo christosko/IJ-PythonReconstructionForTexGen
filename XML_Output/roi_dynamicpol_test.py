@@ -86,7 +86,7 @@ Num=65 # Number of particles
 ReverseSpeedFactor=0.1# Corrective backstep speed factor (if needed) 
 Dang=(2*math.pi)/(Num-1)# Angle step
 aa=100 # Activations allowed
-Dth=8.0 # Difference threshold
+Dth=10.0 # Difference threshold
 NodeList=[]
 
 #w0 Center Pixel window size

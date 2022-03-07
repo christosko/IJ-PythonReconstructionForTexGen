@@ -1,5 +1,6 @@
-from ast import Global
-from locale import normalize
+#from ast import Global
+#from locale import normalize
+from cProfile import label
 import numpy as np
 import math as m
 import os
@@ -794,7 +795,7 @@ def BuildControlPoints(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
    out=Domain.GetBoxLimits(D0,D1)
    X,Y,Z=YarnTypeSort(Textile)
 
-   window=3
+   window=3 # nodes along the length for each direction to consider for line fitting
    UpperBinder=[] 
    LowerBinder=[]
    #Replace with the sorting function
@@ -816,8 +817,8 @@ def BuildControlPoints(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
          UpperBinder.append(yarn)
       else:
          LowerBinder.append(yarn)   
-   upperz=UpperBinder[0].GetNode(1).GetPosition().z + 0.1
-   lowerz=LowerBinder[0].GetNode(1).GetPosition().z - 0.1        
+   upperz=(TopWeft[0][0].z + UpperWarp[0][0].z)*0.5
+   lowerz=(BottomWeft[0][0].z + LowerWarp[0][0].z)*0.5       
    # Top Layer Control Points
    #Control_Points=[[[None for i in range(InPlaneNumWeft-1)] for j in range(InPlaneNumWarp)] for k in range(3)]
    Control_Points_Vec=XYZVector()
@@ -826,17 +827,22 @@ def BuildControlPoints(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
       for j,warp in enumerate(UpperWarp):
          Point1=Find2DIntersection(weft,warp,window)
          #Control_Points[i][j][2]=XYZ(Point1.x,Point1.y,upperz)
+         Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,upperz))
          Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,D1.z))
          if i==0:
+            Control_Points_Vec.push_back(XYZ(D0.x,Point1.y,upperz))
             Control_Points_Vec.push_back(XYZ(D0.x,Point1.y,D1.z))
          
          if i==len(TopWeft)-1:
-            Control_Points_Vec.push_back(XYZ(D1.x,Point1.y,D1.z))  
+            Control_Points_Vec.push_back(XYZ(D1.x,Point1.y,upperz)) 
+            Control_Points_Vec.push_back(XYZ(D1.x,Point1.y,D1.z))   
          
          if j==0:
+            Control_Points_Vec.push_back(XYZ(Point1.x,D0.y,upperz))  
             Control_Points_Vec.push_back(XYZ(Point1.x,D0.y,D1.z))   
          
          if j==len(UpperWarp)-1:
+            Control_Points_Vec.push_back(XYZ(Point1.x,D1.y,upperz))
             Control_Points_Vec.push_back(XYZ(Point1.x,D1.y,D1.z))
 
    for i,weft in enumerate(MidWeft):
@@ -861,28 +867,46 @@ def BuildControlPoints(Textile,Domain,InPlaneNumWeft,InPlaneNumWarp):
    for i,weft in enumerate(BottomWeft):
       for j,warp in enumerate(LowerWarp):
          Point1=Find2DIntersection(weft,warp,window)
+         Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,lowerz))
          Control_Points_Vec.push_back(XYZ(Point1.x,Point1.y,D0.z))
          if i==0:
+            Control_Points_Vec.push_back(XYZ(D0.x,Point1.y,lowerz))
             Control_Points_Vec.push_back(XYZ(D0.x,Point1.y,D0.z))
          
          if i==len(BottomWeft)-1:
+            Control_Points_Vec.push_back(XYZ(D1.x,Point1.y,lowerz))
             Control_Points_Vec.push_back(XYZ(D1.x,Point1.y,D0.z))  
          
          if j==0:
+            Control_Points_Vec.push_back(XYZ(Point1.x,D0.y,lowerz))  
             Control_Points_Vec.push_back(XYZ(Point1.x,D0.y,D0.z))   
          
          if j==len(LowerWarp)-1:
+            Control_Points_Vec.push_back(XYZ(Point1.x,D1.y,lowerz)) 
             Control_Points_Vec.push_back(XYZ(Point1.x,D1.y,D0.z))         
    # Find a way to identify cross over points and yarn section in vicinity
    #ControlMesh=XYZVector()
+   #corner points
    Control_Points_Vec.push_back(XYZ(D0.x,D0.y,D1.z))
    Control_Points_Vec.push_back(XYZ(D1.x,D1.y,D1.z))
    Control_Points_Vec.push_back(XYZ(D0.x,D1.y,D1.z))
    Control_Points_Vec.push_back(XYZ(D1.x,D0.y,D1.z))
+
+   Control_Points_Vec.push_back(XYZ(D0.x,D0.y,upperz))
+   Control_Points_Vec.push_back(XYZ(D1.x,D1.y,upperz))
+   Control_Points_Vec.push_back(XYZ(D0.x,D1.y,upperz))
+   Control_Points_Vec.push_back(XYZ(D1.x,D0.y,upperz))
+
    Control_Points_Vec.push_back(XYZ(D0.x,D0.y,middz))
    Control_Points_Vec.push_back(XYZ(D1.x,D1.y,middz))
    Control_Points_Vec.push_back(XYZ(D0.x,D1.y,middz))
    Control_Points_Vec.push_back(XYZ(D1.x,D0.y,middz))
+
+   Control_Points_Vec.push_back(XYZ(D0.x,D0.y,lowerz))
+   Control_Points_Vec.push_back(XYZ(D1.x,D1.y,lowerz))
+   Control_Points_Vec.push_back(XYZ(D0.x,D1.y,lowerz))
+   Control_Points_Vec.push_back(XYZ(D1.x,D0.y,lowerz))  
+   
    Control_Points_Vec.push_back(XYZ(D0.x,D0.y,D0.z))
    Control_Points_Vec.push_back(XYZ(D1.x,D1.y,D0.z))
    Control_Points_Vec.push_back(XYZ(D0.x,D1.y,D0.z))
@@ -924,7 +948,7 @@ def PlotScatter3D(Vector,ax1,colour):
    X=[p.x for p in Vector]
    Y=[p.y for p in Vector]
    Z=[p.z for p in Vector]
-   ax1.scatter(X,Y,Z, marker='.',color=colour,linewidths=3)
+   ax1.scatter(X,Y,Z, marker='.',color=colour,linewidths=3, label='Control nodes')
    ax1.set_xlabel('X',fontsize=14,fontweight='bold')
    ax1.set_ylabel('Y',fontsize=14,fontweight='bold')
    ax1.set_zlabel('Z',fontsize=14,fontweight='bold')
@@ -964,14 +988,15 @@ def PlotElementSortScatter(mesh,fig1,ax1):
    fig1.colorbar(SM, label='Element')    
    return fig1,ax1
 
-def PlotVectorField3D(OriginalMesh,OrthoMesh,fig1,ax1):
-   numofel=len(OriginalMesh)
-   InPoints=XYZVector()
-   OutPoints=XYZVector()  
-   for i in range(numofel):
-       for j in range(len(OriginalMesh[i].DataPoints)):
-          InPoints.push_back(OriginalMesh[i].DataPoints[j])
-          OutPoints.push_back(OrthoMesh[i].DataPoints[j]) 
+def PlotVectorField3D(InPoints,OutPoints,fig1,ax1):
+   #numofel=len(InMesh)
+   #InPoints=XYZVector()
+   #OutPoints=XYZVector()  
+   #for i in range(numofel):
+   #    for j in range(len(InMesh[i].DataPoints)):
+   #       InPoints.push_back(InMesh[i].DataPoints[j])
+   #       OutPoints.push_back(OutMesh[i].DataPoints[j]) 
+   ##np.seterr(divide='ignore', invalid='ignore')
 
    X1=np.array([p.x for p in InPoints])
    Y1=np.array([p.y for p in InPoints])
@@ -982,29 +1007,33 @@ def PlotVectorField3D(OriginalMesh,OrthoMesh,fig1,ax1):
    Z2=np.array([p.z for p in OutPoints])
    Lens=np.sqrt(np.power(X2-X1,2)+np.power(Y2-Y1,2)+np.power(Z2-Z1,2))
    max_len=Lens.max()
+   if max_len==0.0:
+      print('Zero displacements\n')
+      max_len=1.0
    min_len=Lens.min()
-   NLens=Lens/max_len
-   ColourMap=[(Red(l),Green(l),Blue(l)) for l in NLens]
+   NLens=Lens/float(max_len)
+   VMap=[OutPoints[i]-InPoints[i] for i in range(len(InPoints))]
+   ColourMap=[(Red(float(CheckX(VMap[i]))),Green(float(CheckY(VMap[i]))),Blue(float(CheckZ(VMap[i])))) for i,l in enumerate(NLens)] # Fix colour scheme back to normal
    ArrHeadCMap=[]
    for c in ColourMap:
       ArrHeadCMap.append(c)
-      ArrHeadCMap.append(c)
+      ArrHeadCMap.append(c)# used for second vector point
    ax1.quiver(X1,Y1,Z1,X2-X1,Y2-Y1,Z2-Z1, normalize=False, colors=ColourMap+ArrHeadCMap)
-   ax1.set_xlim(0.5,8.5)
-   ax1.set_ylim(0.5,8.5)
-   ax1.set_zlim(0.0,8)
+   ax1.set_xlim(0.0,6.0) #ax1.set_xlim(0.5,8.5)
+   ax1.set_ylim(0.0,6.0) #ax1.set_ylim(0.5,8.5)
+   ax1.set_zlim(0.0,6.0)#ax1.set_zlim(0.0,8)
    ax1.set_xlabel('X',fontsize=18, fontweight='bold')
    ax1.set_ylabel('Y',fontsize=18, fontweight='bold')
    ax1.set_zlabel('Z',fontsize=18, fontweight='bold')
-   ax1.set_title('Displacement Field',fontsize=20)    
+   #ax1.set_title('Displacement Field',fontsize=20)    
    ax1.set_aspect('auto',adjustable=None)
-   CoMap=[(Red(r),Green(r),Blue(r)) for r in np.linspace(0.0,1.0,20)]
+   CoMap=[(Red(0.0),Green(0.0),Blue(r)) for r in np.linspace(0.0,1.0,20)]  # Fix colour scheme back to normal
    norm=mpl.colors.Normalize(vmin=min_len,vmax=max_len)
    cmap=mpl.colors.ListedColormap(CoMap,name='MyMap')
    SM=mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
    SM.set_array([])
-   CoBar=fig1.colorbar(SM)
-   CoBar.set_label(label='Displacement [mm]',size=16,weight='bold') 
+   #CoBar=fig1.colorbar(SM)
+   #CoBar.set_label(label='Displacement [mm]',size=16,weight='bold') 
 
    return fig1,ax1
 
@@ -1029,20 +1058,29 @@ def PlotProjectedCentroids(Textile):
    ax1.plot(np.array(YR),np.array(YR)*k+m,color='red')
    ax1.legend(fontsize=14)
    #Weft
-   FullWeft=[we for we in Weft if we.GetNode(0).GetPosition().x > 3.5 and we.GetNode(0).GetPosition().x < 7.3 ]
-   WeftLeft=[we for we in FullWeft if we.GetNode(0).GetPosition().x<5.0]
-   WeftRight=[we for we in FullWeft if we.GetNode(0).GetPosition().x>5.0]   
+   Limx0=0.0
+   Limx25=2.5
+   Limx5=5.0
+   Limx1=7.3
+   FullWeft=[we for we in Weft if we.GetNode(0).GetPosition().x > Limx0 and we.GetNode(0).GetPosition().x < Limx1 ]
+   WeftLeft=[we for we in FullWeft if we.GetNode(0).GetPosition().x < Limx25]
+   WeftMidd=[we for we in FullWeft if we.GetNode(0).GetPosition().x > Limx25 and we.GetNode(0).GetPosition().x < Limx5]
+   WeftRight=[we for we in FullWeft if we.GetNode(0).GetPosition().x> Limx5]   
    XL,YL,ZL=GetCentroidsXYZList(WeftLeft)
    XR,YR,ZR=GetCentroidsXYZList(WeftRight)
+   XM,YM,ZM=GetCentroidsXYZList(WeftMidd)
+   XR,YR,ZR=GetCentroidsXYZList(WeftRight)   
    fig2, ax2=plt.subplots()
    ax2.set_xlabel('X',fontsize=14)
    ax2.set_ylabel('Z',fontsize=14)
    ax2.set_title("Weft Projection",fontsize=14)
-   ax2.scatter(XL+XR,ZL+ZR, label='Centroid Data')
+   ax2.scatter(XL+XM+XR,ZL+ZM+ZR, label='Centroid Data')
    k,m=np.polyfit(np.array(XL),np.array(ZL),1)
    ax2.plot(np.array(XL),np.array(XL)*k+m,color='red', label='Fitted Line')
    k,m=np.polyfit(np.array(XR),np.array(ZR),1)
    ax2.plot(np.array(XR),np.array(XR)*k+m,color='red')
+   k,m=np.polyfit(np.array(XM),np.array(ZM),1)
+   ax2.plot(np.array(XM),np.array(XM)*k+m,color='red')   
    ax2.legend(fontsize=14)
    plt.show()
    
@@ -1324,7 +1362,6 @@ def GetPointCloud(Textile):
          for point in secpts:
             PointCloud.push_back(point) 
    return PointCloud
-
 
 def UndistortTextile(Textile,Domain,PointCloud):
    print("Entered undistort function")
@@ -1618,6 +1655,8 @@ def MeasurementStatistics(YarnsDict):
    return 0
 
 if __name__=='__main__':
+
+  #### Input Info ########################################## 
   #Get in the appropriate VF folder 
   ModelLocation=cwd+'\\VF64'
   os.chdir(ModelLocation)
@@ -1627,6 +1666,7 @@ if __name__=='__main__':
      'Warp' : 2,
      'Weft' : 4
   }
+  NumOfZPlanes=5
   FieldOfViewData={
      'WindowSize' : np.genfromtxt('window_size.txt'),
      'ImageResolution' : np.genfromtxt('pixel_size.txt')
@@ -1634,7 +1674,7 @@ if __name__=='__main__':
   YarnPlotParameters={
      'Ratio' : 0.8,  # controls the length-wise profiles used to plot the yarn - 1.0 equals to number of profiles measured by user
      'BinderRatio' : 0.6,
-     'SectionPopulation' : 50,
+     'SectionPopulation' : 40,
      'BinderSectionPopulation' : 25
   }
   GlobalFlips={
@@ -1648,55 +1688,69 @@ if __name__=='__main__':
      'z' : False
   }
 
+######################################
+############# Function Calls ###########################
+
   Textile,Domain=BuildFromData(DataLocation,FieldOfViewData,GlobalFlips,LocalFlips,YarnPlotParameters)
   #Textile,Domain=Extend(Textile,Domain)
-  #SaveAsTG3(ModelLocation,'CT64',Textile,'CT64_0')
+  SaveAsTG3(ModelLocation,'CT64_2',Textile,'CT64_2')
   ##
   #NewTex,NewDomain=Extend(Textile,CDomain)
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)
   #NewTex.AssignDomain(CDomain)
   ##
   ##Find control points from TexGen model, build mesh and compute regularised point cloud
- # ControlPts=BuildControlPoints(Textile,Domain,InPlaneYarns['Weft'],InPlaneYarns['Warp'])
- # DataPts=GetPointCloud(Textile)
- # mesh,regmesh,gnodes=cm.BuildMesh(ControlPts,InPlaneYarns['Weft']+2,InPlaneYarns['Warp']+2,3)
- # regmesh, UPointCloud=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
+  #ControlPts=BuildControlPoints(Textile,Domain,InPlaneYarns['Weft'],InPlaneYarns['Warp'])
+  #DataPts=GetPointCloud(Textile)
+  #mesh,regmesh,gnodes=cm.BuildMesh(ControlPts,InPlaneYarns['Weft']+2,InPlaneYarns['Warp']+2,NumOfZPlanes)
+  #regmesh, UPointCloud=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
   ##
- 
- # SaveAbaqusMesh(gnodes,mesh,ModelLocation,'FullDomainMesh')
- # NewTex=UndistortTextile(Textile,Domain,UPointCloud)
-  ## Plot region#################  
-  #fig=plt.figure()
-  #font={'family':'normal',
-  #      'weight':'normal',
-  #      'size'  : 16}
-  #plt.rc('font',**font)  
-  #ax=fig.add_subplot(111,projection='3d')
-  ##ax=fig.add_subplot()
-  #PlotScatter3D(ControlPts,ax,'black')
-  #
-  ##plt=GetMeasurementDensities(Textile,plt)
-#
-  ##Plot Region : Comment lines according to designated plotting sections
-  #
-  ####Plot scatter of data points in control mesh
-  ##PlotElementSortScatter(mesh,fig,ax)
-  #### end
-  ###Displacement vector field
-  #PlotVectorField3D(mesh,regmesh,fig,ax)
-  ###
-  #plt.legend()
-  #plt.show() # Comment accordingly
 
+#  V0=np.genfromtxt('OriStart.dat')*FieldOfViewData['ImageResolution']
+#  V1=np.genfromtxt('Oriend.dat')*FieldOfViewData['ImageResolution']
+#  CV0=XYZVector(len(V0))
+#  CV1=XYZVector(len(V1))
+#  for i,p in enumerate(V0):
+#     CV0[i]=XYZ(p[2]-4.0,p[0],6.0-p[1])
+#     CV1[i]=XYZ(V1[i][2]-4.0,V1[i][0],6.0-V1[i][1])
+#
+# # SaveAbaqusMesh(gnodes,mesh,ModelLocation,'FullDomainMesh')
+#  #NewTex=UndistortTextile(Textile,Domain,UPointCloud)
+#  ## Plot region#################  
+#  fig=plt.figure()
+#  font={'family':'normal',
+#        'weight':'normal',
+#        'size'  : 16}
+#  plt.rc('font',**font)  
+#  ax=fig.add_subplot(111,projection='3d')
+#  #ax=fig.add_subplot()
+#  #PlotScatter3D(ControlPts,ax,'black')
+#  #
+#  ##plt=GetMeasurementDensities(Textile,plt)
+##
+#  ##Plot Region : Comment lines according to designated plotting sections
+#  #
+#  #PlotProjectedCentroids(Textile)
+#  ####Plot scatter of data points in control mesh
+#  ##PlotElementSortScatter(mesh,fig,ax)
+#  #### end
+#  ###Displacement vector field
+#  PlotVectorField3D(CV0,CV1,fig,ax)
+#  #PlotVectorField3D(mesh,regmesh,fig,ax)
+#  ###
+#  plt.legend()
+#  plt.show() # Comment accordingly
+#
   #Finalise and save TG3 file:
   #Textile.AssignDomain(CDomain)
-  AddTextile('Rec64',Textile)
+  #AddTextile('UCT55',NewTex)
   #AddTextile('Rec9',Textile)
 
-  SaveToXML(ModelLocation+'\\CT64.tg3',"",OUTPUT_STANDARD)
+  #SaveToXML(ModelLocation+'\\UCT55.tg3',"",OUTPUT_STANDARD)
 
 
     
 
 
 
+      
