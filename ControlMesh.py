@@ -303,7 +303,6 @@ def UndistortedPointCloud(PointCloud,DistMesh,RegMesh):
             UPointCloud[StoreInds[pi]]=XYZ(newx,newy,newz)
             #print(UPointCloud[StoreInds[pi]]-p)   
             RegMesh[ind].InsertPoint(XYZ(newx,newy,newz))
-            
         #RegMesh[ind].IndexMatch=element.IndexMatch
     #UPointCloud=XYZVector()
     #for el in RegMesh:
@@ -317,7 +316,7 @@ def UndistortedPointCloud(PointCloud,DistMesh,RegMesh):
     #    except ValueError:
     #      print('None value in position: '+str(i))    
     
-    return RegMesh, UPointCloud
+    return UPointCloud
 
 if __name__=='__main__':
     #test=XYZVector()

@@ -1,3 +1,4 @@
+## !!! use with caution!!!
 import os
 import sys
 from os import listdir
@@ -7,7 +8,7 @@ cwd=os.getcwd()
 ModelLocation=cwd+'\\VF64'
 os.chdir(ModelLocation)
 
-DataLocation=ModelLocation+'\\Data2'
+DataLocation=ModelLocation+'\\Data3'
 FileNames=[f for f in listdir(DataLocation)] # full names
 FileList=[(f.replace('.dat','')).split('_') for f in listdir(DataLocation)]
 for i,file in enumerate(FileList):   

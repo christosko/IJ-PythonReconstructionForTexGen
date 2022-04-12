@@ -6,10 +6,10 @@ import os
 image = IJ.getImage()
 # Get current ROI
 roi = image.getRoi()
-roi=roi.getInterpolatedPolygon(5,True)
+#roi=roi.getInterpolatedPolygon(5,True)
 slic=image.getSlice()
 ### Define : 
-insert='X_10_0_' + str(slic)# + '_-1'
+insert='X_0_0_' + str(slic)# + '_-1'
 ###
 upper=False # Check if it's the upper or lower part of the binder yarn
 ####
@@ -21,13 +21,13 @@ elif insert_break[2]=='1' and not upper:
    
 if roi:
     # Get ROI points
-    #polygon = roi.getPolygon()
-    polygon = roi #= polygon.getInterpolatedPolygon(5,True)
+    polygon = roi.getPolygon()
+    #polygon = roi #= polygon.getInterpolatedPolygon(5,True)
     n_points = polygon.npoints
     x = polygon.xpoints
     y = polygon.ypoints
 
-    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF64\\Data2\\'
+    dirPath='D:\\IJPythonReconstructionOfTexComp\\VF64\\DataUC2\\'
     fileName=insert + '.dat'
     if os.path.isdir(dirPath):
       f = open(dirPath+fileName, 'w')

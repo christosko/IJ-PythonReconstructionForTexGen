@@ -13,7 +13,7 @@ imp=IJ.getImage()
 image = imp.getImageStack()
 # Get measured polygons
 cwd=os.getcwd()
-dataloc='D:\\IJPythonReconstructionOfTexComp\\VF64\\Data2'
+dataloc='D:\\IJPythonReconstructionOfTexComp\\VF64\\Data3'
 #Axis:
 ax='X'
 dats=[d for d in listdir(dataloc) if '.dat' in d and ax in d] # Change for slice direction

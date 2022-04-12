@@ -6,12 +6,18 @@ import math as m
 import os
 import sys
 from os import listdir
+
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D 
 from sklearn.cluster import KMeans
+
 import imp
 import ControlMesh as cm
+
 imp.reload(cm)
 cwd=os.getcwd()
 sys.path.append(cwd)
@@ -113,6 +119,42 @@ def CheckClockwise(Arr):
    else:
       print 'Colinear vectors!'
       return None
+
+def GetDomain(TG3Name):
+   Tree=ET.parse(TG3Name)
+   Root=Tree.getroot()
+   domain=[]
+   for child in Root:
+     Textile=child
+     break
+   for child in Textile:
+     if child.tag=='Domain':
+        Domain=child
+        for child in Domain:
+           if child.tag=='Plane':
+              domain.append(float(child.attrib['d']))
+   CP2=XYZ(domain[0],domain[2],domain[4])
+   CP1=XYZ(-domain[1],-domain[3],-domain[5])
+   CDomain=CDomainPlanes(CP1,CP2)           
+   return CDomain 
+
+def AssignYarnFibreData(TG3Name,LinearDensity,LinearDensityUnits,FibreDensity,FibreDensityUnits):
+   Tree=ET.parse(TG3Name)
+   Root=Tree.getroot()
+
+   for child in Root:
+     Textile=child
+     break
+   for child in Textile:
+     if child.tag=='Yarn':
+        Yarn=child
+        Yarn.attrib['YarnLinearDensityUnits']=LinearDensityUnits
+        Yarn.attrib['YarnLinearDensityValue']=str(LinearDensity)
+        Yarn.attrib['FibreDensityUnits']=FibreDensityUnits
+        Yarn.attrib['FibreDensityValue']=str(FibreDensity)  
+      
+   return 0
+
 
 class Yarns: # This class, after initialisation, takes sections using InsertSection and either creates a new yarn in the tree or updates an existing one
 
@@ -1607,7 +1649,7 @@ def BuildFromData(DataLocation,FieldOfViewData, GlobalFlips, LocalFlips, YarnPlo
   return Textile, CDomain
 
 def ImportFromTG3(ModelLocation,ModelName,TexName):
-   ReadFromXML(ModelLocation+'/'+ModelName+'.tg3')
+   ReadFromXML(ModelLocation+'\\'+ModelName+'.tg3')
    Textile=GetTextile(TexName)
    return Textile
 
@@ -1654,14 +1696,147 @@ def MeasurementStatistics(YarnsDict):
    pass         
    return 0
 
+
+def RemoveDistXML(TG3Name,mesh,regmesh):
+   Tree=ET.parse(TG3Name)
+   Root=Tree.getroot()
+
+   for child in Root:
+     Textile=child
+     break
+   for child in Textile:
+     if child.tag=='Yarn':
+        Yarn=child
+        Nodes=[child.attrib['Position'].split(', ') for child in Yarn if child.tag=='MasterNode']
+
+        M0=XYZ(float(Nodes[0][0]),float(Nodes[0][1]),float(Nodes[0][1]))
+        M1=XYZ(float(Nodes[1][0]),float(Nodes[1][1]),float(Nodes[1][1])) 
+        V=M1-M0
+        for child in Yarn:
+           if child.tag=='YarnSection':
+             YarnSection=child
+             for child in YarnSection:
+                if child.tag=='PositionSection':
+                  PositionSection=child
+                  t=float(PositionSection.attrib['t'])
+                  for child in PositionSection:
+                    if child.tag=='Section':
+                      Section=child
+                      for child in Section:
+                        if child.tag=='PolygonPoint': 
+                          oldvalue=child.attrib['value']
+                          splitvalue=oldvalue.split(', ')
+                          px=float(splitvalue[0])
+                          py=float(splitvalue[1])
+                          if abs(V.x)==0.0:
+                             p=XYZ(px,0.0,py)
+                          elif abs(V.y)==0.0:  
+                             p=XYZ(0.0,px,py)
+                          gp=p+M0+V*t
+                          gv=XYZVector()
+                          gv.push_back(gp)
+                          ugv=cm.UndistortedPointCloud(gv,mesh,regmesh)
+                          for ugp in ugv:
+                            locp=ugp-M0-V*t
+                          if abs(V.x)==0.0:
+                             child.attrib['value']=str(locp.x)+", "+str(locp.z)
+                          elif abs(V.y)==0.0:                          
+                             child.attrib['value']=str(locp.y)+", "+str(locp.z)
+
+   Tree.write(TG3Name.replace('.tg3','')+'Edit.tg3')       
+   return 0
+
+def PermTrimYarnsXML(TG3Name,CDomain):
+   D0=XYZ()
+   D1=XYZ()
+   out=CDomain.GetBoxLimits(D0,D1)
+   print(D0)
+   print(D1)
+   Tree=ET.parse(TG3Name)
+   Root=Tree.getroot()
+
+   for child in Root:
+     Textile=child
+     break
+   for child in Textile:
+     if child.tag=='Yarn':  
+        Yarn=child
+        if Yarn.attrib['index']!='0':
+           #Nodes=Yarn.findall('MasterNode')
+           Nodes=[child.attrib['Position'].split(', ') for child in Yarn if child.tag=='MasterNode']
+           print(Yarn.attrib['index'])
+           M0=XYZ(float(Nodes[0][0]),float(Nodes[0][1]),float(Nodes[0][2]))
+           M1=XYZ(float(Nodes[1][0]),float(Nodes[1][1]),float(Nodes[1][2])) 
+   
+           V=M1-M0
+           print(V)
+           for child in Yarn:
+              if child.tag=='YarnSection':
+                YarnSection=child
+                for child in YarnSection:
+                   if child.tag=='PositionSection':
+                     PositionSection=child
+                     t=float(PositionSection.attrib['t'])
+                     for child in PositionSection:
+                       if child.tag=='Section':
+                         Section=child
+                         PolygonPoints=Section.findall('PolygonPoint')
+                         #numpts=len(PolygonPoints)
+                         #sum=0
+                         for point in PolygonPoints:
+                            strvalue=point.attrib['value']
+                            splitvalue=strvalue.split(', ')
+                            px=float(splitvalue[0])
+                            py=float(splitvalue[1])
+                            if abs(V.x)<1.0e-4 and abs(V.z)<1.0e-4:
+                               p=XYZ(px,0.0,py)
+                            elif abs(V.y)<1.0e-4 and abs(V.z)<1.0e-4:  
+                               p=XYZ(0.0,px,py)
+                            elif abs(V.x)<1.0e-4 and abs(V.y)<1.0e-4:
+                               p=XYZ(px,py,0.0)   
+                            gp=p+M0+V*t
+                            if not PointInsideBox(gp,D1,D0):
+                               Section.remove(point)
+   
+
+   Tree.write(TG3Name.replace('.tg3','')+'Edit.tg3')    
+
+   Tree=ET.parse(TG3Name.replace('.tg3','')+'Edit.tg3')
+   Root=Tree.getroot()
+
+   for child in Root:
+     Textile=child
+     break
+   for child in Textile:
+     if child.tag=='Yarn':  
+        Yarn=child
+        if Yarn.attrib['index']!='0':
+           for child in Yarn:
+              if child.tag=='YarnSection':
+                YarnSection=child
+                for child in YarnSection:
+                   if child.tag=='PositionSection':
+                     PositionSection=child
+                     for child in PositionSection:
+                       if child.tag=='Section':
+                         Section=child
+                         PolygonPoints=Section.findall('PolygonPoint')
+                         numpts=len(PolygonPoints)
+                         if numpts==0:
+                            for i in range(10):
+                               ET.SubElement(Section,'PolygonPoint',attrib={'value':str(0.0)+", "+str(0.0)})
+   
+   Tree.write(TG3Name.replace('.tg3','')+'Edit.tg3')
+   return 0
+
 if __name__=='__main__':
 
   #### Input Info ########################################## 
-  #Get in the appropriate VF folder 
-  ModelLocation=cwd+'\\VF64'
+  #Set the appropriate VF folder 
+  ModelLocation=cwd+'\\VF55'
   os.chdir(ModelLocation)
-  
-  DataLocation=ModelLocation+'\\Data2'
+  TargetLocation='D:\\Project_Repository\\Damage_Analysis\\S11'
+  DataLocation=ModelLocation+'\\Data8'
   InPlaneYarns={
      'Warp' : 2,
      'Weft' : 4
@@ -1672,10 +1847,10 @@ if __name__=='__main__':
      'ImageResolution' : np.genfromtxt('pixel_size.txt')
   }
   YarnPlotParameters={
-     'Ratio' : 0.8,  # controls the length-wise profiles used to plot the yarn - 1.0 equals to number of profiles measured by user
+     'Ratio' : 4.0,  # controls the length-wise profiles used to plot the yarn - 1.0 equals to number of profiles measured by user
      'BinderRatio' : 0.6,
-     'SectionPopulation' : 40,
-     'BinderSectionPopulation' : 25
+     'SectionPopulation' : 100,
+     'BinderSectionPopulation' : 30
   }
   GlobalFlips={
      'x' : False,
@@ -1690,10 +1865,19 @@ if __name__=='__main__':
 
 ######################################
 ############# Function Calls ###########################
+  #TestPath='D:\\Project_Repository\\Damage_Analysis\\S11'
+  #sys.path.append(TestPath)
+  #os.chdir(TestPath)
+  #TGName='R8.tg3'
+  #TGTexName='ShearedDomain'
+  #Textile=ImportFromTG3(TestPath,TGName,TGTexName)
+  #OldDomain=GetDomain(TGName)
+  #PermTrimYarnsXML(TGName,OldDomain)  
+
 
   Textile,Domain=BuildFromData(DataLocation,FieldOfViewData,GlobalFlips,LocalFlips,YarnPlotParameters)
   #Textile,Domain=Extend(Textile,Domain)
-  SaveAsTG3(ModelLocation,'CT64_2',Textile,'CT64_2')
+  SaveAsTG3(TargetLocation,'CT55',Textile,'CT55Tex')
   ##
   #NewTex,NewDomain=Extend(Textile,CDomain)
   #NewTex=EnforcePeriodicity(NewTex,NewDomain)
@@ -1703,8 +1887,13 @@ if __name__=='__main__':
   #ControlPts=BuildControlPoints(Textile,Domain,InPlaneYarns['Weft'],InPlaneYarns['Warp'])
   #DataPts=GetPointCloud(Textile)
   #mesh,regmesh,gnodes=cm.BuildMesh(ControlPts,InPlaneYarns['Weft']+2,InPlaneYarns['Warp']+2,NumOfZPlanes)
-  #regmesh, UPointCloud=cm.UndistortedPointCloud(DataPts,mesh,regmesh)
-  ##
+  #gv=XYZVector()
+  #g=XYZ(2.0,2.0,2.0)
+  #gv.push_back(g)
+  #upoints=cm.UndistortedPointCloud(gv,mesh,regmesh)
+  #print(isinstance(upoints[0],XYZ))
+  #RemoveDistXML('CT55_2.tg3',mesh,regmesh)
+  #
 
 #  V0=np.genfromtxt('OriStart.dat')*FieldOfViewData['ImageResolution']
 #  V1=np.genfromtxt('Oriend.dat')*FieldOfViewData['ImageResolution']
